@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Registre de la Chancellerie impériale</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app" class="app-shell">
+    <main id="public-view" class="public-view active">
+      <section class="landing-card">
+        <div class="landing-copy">
+          <img src="Logo empire 2.png" alt="Logo Chancellerie" class="logo-image logo-image-large" />
+          <h1>Registre de la Chancellerie impériale</h1>
+          <p>Tenue officielle des dossiers judiciaires, des condamnations, des amendes, des peines en nature, des certifications impériales et des reversements au trésor impérial.</p>
+          <div class="security-notice">Accès réservé aux autorités accréditées de l’Empire.</div>
+        </div>
+        <div class="landing-auth-panel">
+          <section id="login-screen" class="auth-screen">
+            <div class="auth-card">
+              <h2>Ouvrir une session</h2>
+              <form id="login-form" novalidate>
+                <label>Adresse électronique<label class="input-label">
+                  <input type="email" id="login-email" placeholder="exemple@imperial.im" required />
+                </label></label>
+                <label>Mot de passe<label class="input-label">
+                  <input type="password" id="login-password" placeholder="Mot de passe" required />
+                </label></label>
+                <div class="form-actions">
+                  <button type="submit" class="primary-btn">Se connecter</button>
+                  <button type="button" class="link-btn" id="show-register">Créer un compte</button>
+                </div>
+              </form>
+              <div id="login-error" class="form-error hidden"></div>
+            </div>
+          </section>
+          <section id="register-screen" class="auth-screen hidden">
+            <div class="auth-card">
+              <h2>Demander une habilitation</h2>
+              <form id="register-form" novalidate>
+                <label>Nom complet<label class="input-label">
+                  <input type="text" id="register-name" placeholder="Nom complet" required />
+                </label></label>
+                <label>Adresse électronique<label class="input-label">
+                  <input type="email" id="register-email" placeholder="exemple@imperial.im" required />
+                </label></label>
+                <label>Mot de passe<label class="input-label">
+                  <input type="password" id="register-password" placeholder="Mot de passe" required />
+                </label></label>
+                <div class="form-actions">
+                  <button type="submit" class="primary-btn">Demander une habilitation</button>
+                  <button type="button" class="link-btn" id="show-login">Retour à la connexion</button>
+                </div>
+              </form>
+              <div id="register-message" class="form-info hidden"></div>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+    <div id="app-shell" class="app-shell hidden">
+      <aside class="sidebar">
+        <div class="sidebar-brand">
+          <img src="Logo empire 2.png" alt="Logo" class="logo-image logo-image-small" />
+          <div>
+            <h3>Registre impérial</h3>
+            <p>Office de la Chancellerie</p>
+          </div>
+        </div>
+        <nav class="sidebar-nav">
+          <button class="nav-link active" data-section="dashboard">Tableau de bord</button>
+          <button class="nav-link" data-section="judicial">Dossiers judiciaires</button>
+          <button class="nav-link" data-section="certifications">Demandes de certification</button>
+          <button class="nav-link" data-section="payments">Paiements et recettes</button>
+          <button class="nav-link" data-section="users">Utilisateurs</button>
+          <button class="nav-link" data-section="journal">Journal des modifications</button>
+          <button class="nav-link" data-section="settings">Paramétrage</button>
+        </nav>
+      </aside>
+      <div class="main-layout">
+        <header class="topbar">
+          <div class="topbar-left">
+            <img src="Logo empire 2.png" alt="Logo" class="logo-image logo-image-medium" />
+            <div>
+              <span class="topbar-title">Registre de la Chancellerie impériale</span>
+              <span id="section-title" class="section-title">Tableau de bord</span>
+            </div>
+          </div>
+          <div class="topbar-right">
+            <div class="user-chip">
+              <span id="current-user-name"></span>
+              <span id="current-user-role"></span>
+            </div>
+            <button class="secondary-btn slim" id="logout-button">Se déconnecter</button>
+          </div>
+        </header>
+        <main class="content-area">
+          <section id="dashboard" class="content-section active">
+            <div class="section-header">
+              <div>
+                <p class="section-lead">Registre impérial</p>
+                <h2>Tableau de bord</h2>
+                <p class="section-description">Situation générale du registre</p>
+              </div>
+              <div class="section-actions">
+                <button class="secondary-btn slim" id="refresh-dashboard-button">Rafraîchir</button>
+              </div>
+            </div>
+            <div class="section-block refresh-status-row">
+              <span id="refresh-status-dashboard" class="refresh-status hidden"></span>
+            </div>
+            <div class="cards-grid">
+              <article class="card card-small">
+                <span>Dossiers judiciaires ouverts</span>
+                <strong id="card-open-judicial">0</strong>
+              </article>
+              <article class="card card-small">
+                <span>Dossiers judiciaires archivés</span>
+                <strong id="card-archived-judicial">0</strong>
+              </article>
+              <article class="card card-small">
+                <span>Dossiers de certification ouverts</span>
+                <strong id="card-open-certifications">0</strong>
+              </article>
+              <article class="card card-small">
+                <span>Dossiers de certification archivés</span>
+                <strong id="card-archived-certifications">0</strong>
+              </article>
+              <article class="card card-small card-alert">
+                <span>Montant total dû</span>
+                <strong id="card-total-due">0 Septims</strong>
+              </article>
+              <article class="card card-small">
+                <span>Montant total des certifications</span>
+                <strong id="card-total-certifications">0 Septims</strong>
+              </article>
+              <article class="card card-small">
+                <span>Montant total des amendes prononcées</span>
+                <strong id="card-total-fines">0 Septims</strong>
+              </article>
+              <article class="card card-small">
+                <span>Montant total reversé au trésor impérial</span>
+                <strong id="card-total-treasury">0 Septims</strong>
+              </article>
+              <article class="card card-small">
+                <span>Montant conservé pour la Chancellerie</span>
+                <strong id="card-total-chancellery">0 Septims</strong>
+              </article>
+              <article class="card card-small">
+                <span>Montant total réglé en attente de transfert</span>
+                <strong id="card-pending-total">0 Septims</strong>
+              </article>
+              <article class="card card-small">
+                <span>En attente → Trésor impérial</span>
+                <strong id="card-pending-treasury">0 Septims</strong>
+              </article>
+              <article class="card card-small">
+                <span>En attente → Chancellerie</span>
+                <strong id="card-pending-chancellery">0 Septims</strong>
+              </article>
+            </div>
+            <div class="section-block two-columns">
+              <article class="card">
+                <h3>Derniers dossiers ouverts</h3>
+                <div class="table-scroll">
+                  <table class="compact-table">
+                    <thead>
+                      <tr>
+                        <th>Référence</th>
+                        <th>Type de dossier</th>
+                        <th>Personne concernée</th>
+                        <th>Date d’ouverture</th>
+                        <th>Statut</th>
+                        <th>Montant</th>
+                      </tr>
+                    </thead>
+                    <tbody id="dashboard-latest-list">
+                    </tbody>
+                  </table>
+                </div>
+              </article>
+              <article class="card">
+                <h3>État des peines</h3>
+                <div class="status-grid">
+                  <div><span>Peines non commencées</span><strong id="status-not-started">0</strong></div>
+                  <div><span>Peines en cours d’exécution</span><strong id="status-in-progress">0</strong></div>
+                  <div><span>Peines exécutées</span><strong id="status-completed">0</strong></div>
+                  <div><span>Peines suspendues</span><strong id="status-suspended">0</strong></div>
+                  <div><span>Peines annulées</span><strong id="status-cancelled">0</strong></div>
+                </div>
+                <div class="status-summary"> <strong id="status-remaining">0</strong> peines restent à exécuter</div>
+              </article>
+            </div>
+          </section>
+          <section id="judicial" class="content-section hidden">
+            <div class="section-header">
+              <div>
+                <p class="section-lead">Registre impérial</p>
+                <h2>Dossier judiciaire</h2>
+                <p class="section-description">Registre des condamnations, amendes et peines en nature</p>
+              </div>
+              <div class="section-actions">
+                <button class="secondary-btn slim" id="refresh-judicial-button">Rafraîchir</button>
+                <button class="primary-btn" id="new-judicial-button">Nouveau dossier judiciaire</button>
+              </div>
+            </div>
+            <div class="section-block refresh-status-row">
+              <span id="refresh-status-judicial" class="refresh-status hidden"></span>
+            </div>
+            <div class="section-block filter-row">
+              <input type="search" id="judicial-search" placeholder="Rechercher un prévenu, une référence ou une qualification" />
+              <select id="judicial-status-filter">
+                <option value="all">Toutes les peines</option>
+                <option value="none">Aucune</option>
+                <option value="Non commencée">Non commencée</option>
+                <option value="En cours d’exécution">En cours d’exécution</option>
+                <option value="Exécutée">Exécutée</option>
+                <option value="Suspendue">Suspendue</option>
+                <option value="Annulée">Annulée</option>
+              </select>
+              <select id="judicial-fine-status-filter">
+                <option value="all">Tous les statuts</option>
+                <option value="Non réglée">Non réglée</option>
+                <option value="Partiellement réglée">Partiellement réglée</option>
+                <option value="Réglée">Réglée</option>
+                <option value="Annulée">Annulée</option>
+              </select>
+              <label class="checkbox-label"><input type="checkbox" id="judicial-show-archived" />Afficher les archives</label>
+            </div>
+            <div class="table-scroll">
+              <table class="data-table" id="judicial-table">
+                <thead>
+                  <tr>
+                    <th>Référence</th>
+                    <th>Prévenu</th>
+                    <th>Magistrat</th>
+                    <th>Qualification juridique</th>
+                    <th>Amende</th>
+                    <th>Trésor impérial</th>
+                    <th>Part Chancellerie</th>
+                    <th>Peine en nature</th>
+                    <th>Statut de la peine</th>
+                    <th>Statut de l'amende</th>
+                    <th>Lien Discord</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="judicial-list"></tbody>
+              </table>
+            </div>
+          </section>
+          <section id="certifications" class="content-section hidden">
+            <div class="section-header">
+              <div>
+                <p class="section-lead">Registre impérial</p>
+                <h2>Demande de certification</h2>
+                <p class="section-description">Registre des certifications et des paiements</p>
+              </div>
+              <div class="section-actions">
+                <button class="secondary-btn slim" id="refresh-certification-button">Rafraîchir</button>
+                <button class="primary-btn" id="new-certification-button">Nouvelle demande de certification</button>
+              </div>
+            </div>
+            <div class="section-block refresh-status-row">
+              <span id="refresh-status-certification" class="refresh-status hidden"></span>
+            </div>
+            <div class="section-block filter-row">
+              <input type="search" id="certification-search" placeholder="Rechercher une référence, un candidat ou un professeur" />
+              <select id="certification-status-filter">
+                <option value="all">Tous les statuts</option>
+                <option value="Non réglée">Non réglée</option>
+                <option value="Partiellement réglée">Partiellement réglée</option>
+                <option value="Réglée">Réglée</option>
+                <option value="Annulée">Annulée</option>
+              </select>
+              <label class="checkbox-label"><input type="checkbox" id="certification-show-archived" />Afficher les archives</label>
+            </div>
+            <div class="table-scroll">
+              <table class="data-table" id="certification-table">
+                <thead>
+                  <tr>
+                    <th>Référence</th>
+                    <th>Nom du candidat</th>
+                    <th>Professeur</th>
+                    <th>Date de formation</th>
+                    <th>Type de formation</th>
+                    <th>Montant</th>
+                    <th>Trésor impérial</th>
+                    <th>Part Chancellerie</th>
+                    <th>Statut du paiement</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="certification-list"></tbody>
+              </table>
+            </div>
+          </section>
+          <section id="payments" class="content-section hidden">
+            <div class="section-header">
+              <div>
+                <p class="section-lead">Paiement et recette</p>
+                <h2>Encaissement des amendes, certifications et reversements au trésor impérial</h2>
+              </div>
+              <div class="section-actions">
+                <button class="secondary-btn slim" id="refresh-payments-button">Rafraîchir</button>
+              </div>
+            </div>
+            <div class="section-block refresh-status-row">
+              <span id="refresh-status-payments" class="refresh-status hidden"></span>
+            </div>
+            <div class="cards-grid">
+              <article class="card card-small">
+                <span>Total encaissé</span>
+                <strong id="card-total-received">0 Septims</strong>
+              </article>
+              <article class="card card-small">
+                <span>Trésor impérial</span>
+                <strong id="card-received-treasury">0 Septims</strong>
+              </article>
+              <article class="card card-small">
+                <span>Fonctionnement Chancellerie</span>
+                <strong id="card-received-chancellery">0 Septims</strong>
+              </article>
+            </div>
+            <div class="section-block form-card">
+              <button class="primary-btn" id="add-receipt-button">Créer une nouvelle recette</button>
+              <div id="receipt-message" class="form-info hidden"></div>
+            </div>
+            <div class="table-scroll">
+              <table class="data-table" id="receipt-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Dossier</th>
+                    <th>Référence</th>
+                    <th>Type</th>
+                    <th>Montant</th>
+                    <th>Affectation</th>
+                    <th>Trésor impérial</th>
+                    <th>Chancellerie</th>
+                    <th>Moyen de paiement</th>
+                    <th>Enregistré par</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="receipt-list"></tbody>
+              </table>
+            </div>
+          </section>
+          <section id="users" class="content-section hidden">
+            <div class="section-header">
+              <div>
+                <p class="section-lead">Utilisateurs</p>
+                <h2>Office inscrit et habilitation accordée par le Chancelier</h2>
+              </div>
+              <div class="section-actions">
+                <button class="secondary-btn slim" id="refresh-users-button">Rafraîchir</button>
+              </div>
+            </div>
+            <div class="section-block refresh-status-row">
+              <span id="refresh-status-users" class="refresh-status hidden"></span>
+            </div>
+            <div class="table-scroll">
+              <table class="data-table" id="users-table">
+                <thead>
+                  <tr>
+                    <th>Nom</th>
+                    <th>Adresse électronique</th>
+                    <th>Rôle</th>
+                    <th>Statut</th>
+                    <th>Accès accordés</th>
+                    <th>Date d’inscription</th>
+                    <th>Dernière activité</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="users-list"></tbody>
+              </table>
+            </div>
+          </section>
+          <section id="journal" class="content-section hidden">
+            <div class="section-header">
+              <div>
+                <p class="section-lead">Journal des modifications</p>
+                <h2>Journal des modifications</h2>
+              </div>
+              <div class="section-actions">
+                <button class="secondary-btn slim" id="refresh-journal-button">Rafraîchir</button>
+              </div>
+            </div>
+            <div class="section-block refresh-status-row">
+              <span id="refresh-status-journal" class="refresh-status hidden"></span>
+            </div>
+            <div class="table-scroll">
+              <table class="data-table" id="journal-table">
+                <thead>
+                  <tr>
+                    <th>Utilisateur</th>
+                    <th>Date</th>
+                    <th>Heure</th>
+                    <th>Action</th>
+                    <th>Type de dossier</th>
+                    <th>Référence</th>
+                    <th>Description</th>
+                  </tr>
+                </thead>
+                <tbody id="journal-list"></tbody>
+              </table>
+            </div>
+          </section>
+          <section id="settings" class="content-section hidden">
+            <div class="section-header">
+              <div>
+                <p class="section-lead">Paramétrage</p>
+                <h2>Paramètres du registre</h2>
+              </div>
+            </div>
+            <div class="settings-grid">
+              <div class="card form-card">
+                <h3>Paramètres financiers</h3>
+                <form id="settings-form" novalidate>
+                  <div class="slider-card">
+                    <label>Répartition des amendes judiciaires</label>
+                    <div class="slider-row">
+                      <span>Trésor impérial</span>
+                      <span id="setting-judicial-display">60% / 40%</span>
+                    </div>
+                    <input type="range" id="setting-judicial-treasury" min="0" max="100" value="60" />
+                  </div>
+                  <div class="slider-card">
+                    <label>Répartition des demandes de certification</label>
+                    <div class="slider-row">
+                      <span>Trésor impérial</span>
+                      <span id="setting-certification-display">60% / 40%</span>
+                    </div>
+                    <input type="range" id="setting-certification-treasury" min="0" max="100" value="60" />
+                  </div>
+                  <label>Année de référence<label class="input-label">
+                    <input type="text" id="setting-year" required />
+                  </label></label>
+                  <label>Nom de l’institution<label class="input-label">
+                    <input type="text" id="setting-institution" required />
+                  </label></label>
+                  <label>Devise utilisée<label class="input-label">
+                    <input type="text" id="setting-currency" required />
+                  </label></label>
+                  <button class="primary-btn" type="submit">Enregistrer le paramétrage</button>
+                </form>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+	<script src="app.js"></script>
+</body>
+</html>
