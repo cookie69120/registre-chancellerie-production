@@ -1793,45 +1793,64 @@ async function loadAppData() {
     return;
   }
 
-  console.log('📊 Chargement des données pour:', appState.currentUser.name, 'ID:', appState.currentUser.id);
+  console.log('📊 Chargement des données pour:', appState.currentUser.email, 'ID:', appState.currentUser.id);
 
   try {
     // Charger les enregistrements judiciaires
     const { data: judicial, error: judicialError } = await supabaseClient
       .from('judicial_records')
-      .select('*');
+      .select('*')
+      .order('created_at', { ascending: false });
 
-    if (judicialError) throw judicialError;
-    appState.judicialRecords = judicial || [];
-    console.log('✅ Enregistrements judiciaires chargés:', appState.judicialRecords.length);
+    if (judicialError) {
+      console.warn('⚠️ Erreur judicial_records:', judicialError.message);
+    } else {
+      appState.judicialRecords = judicial || [];
+      appState.counters.judicial = appState.judicialRecords.length;
+      console.log('✅ Enregistrements judiciaires chargés:', appState.judicialRecords.length);
+    }
 
     // Charger les certifications
     const { data: certifications, error: certificationsError } = await supabaseClient
       .from('certifications')
-      .select('*');
+      .select('*')
+      .order('created_at', { ascending: false });
 
-    if (certificationsError) throw certificationsError;
-    appState.certifications = certifications || [];
-    console.log('✅ Certifications chargées:', appState.certifications.length);
+    if (certificationsError) {
+      console.warn('⚠️ Erreur certifications:', certificationsError.message);
+    } else {
+      appState.certifications = certifications || [];
+      appState.counters.certification = appState.certifications.length;
+      console.log('✅ Certifications chargées:', appState.certifications.length);
+    }
 
     // Charger les reçus
     const { data: receipts, error: receiptsError } = await supabaseClient
       .from('receipts')
-      .select('*');
+      .select('*')
+      .order('created_at', { ascending: false });
 
-    if (receiptsError) throw receiptsError;
-    appState.receipts = receipts || [];
-    console.log('✅ Reçus chargés:', appState.receipts.length);
+    if (receiptsError) {
+      console.warn('⚠️ Erreur receipts:', receiptsError.message);
+    } else {
+      appState.receipts = receipts || [];
+      appState.counters.receipts = appState.receipts.length;
+      console.log('✅ Reçus chargés:', appState.receipts.length);
+    }
 
-    // Charger les profils (admin seulement) - ✅ UTILISE 'profiles'
+    // Charger les profils (admin seulement)
     if (isAdmin()) {
       const { data: profiles, error: profilesError } = await supabaseClient
         .from('profiles')
-        .select('*');
+        .select('*')
+        .order('created_at', { ascending: false });
 
-      if (profilesError) throw profilesError;
-      appState.profiles = profiles || [];
-      console.log('✅ Profils chargés:', appState.profiles.length);
+      if (profilesError) {
+        console.warn('⚠️ Erreur profiles:', profilesError.message);
+      } else {
+        appState.profiles = profiles || [];
+        console.log('✅ Profils chargés:', appState.profiles.length);
+      }
     }
 
     // Charger le journal
@@ -1840,25 +1859,34 @@ async function loadAppData() {
       .select('*')
       .order('created_at', { ascending: false });
 
-    if (journalError) throw journalError;
-    appState.journal = journal || [];
-    console.log('✅ Journal chargé:', appState.journal.length);
+    if (journalError) {
+      console.warn('⚠️ Erreur modification_journal:', journalError.message);
+    } else {
+      appState.journal = journal || [];
+      appState.counters.journal = appState.journal.length;
+      console.log('✅ Journal chargé:', appState.journal.length);
+    }
 
-    // Charger les paramètres - ✅ UTILISE 'app_settings'
+    // Charger les paramètres
     const { data: settings, error: settingsError } = await supabaseClient
       .from('app_settings')
       .select('*')
       .eq('id', 1)
       .single();
 
-    if (!settingsError && settings) {
+    if (settingsError) {
+      console.warn('⚠️ Erreur app_settings:', settingsError.message);
+    } else if (settings) {
       appState.settings = settings;
       console.log('✅ Paramètres chargés');
     }
 
+    // Afficher le dashboard
     renderDashboard();
+    console.log('✅ Chargement complet réussi');
+
   } catch (err) {
-    console.error('❌ Erreur lors du chargement:', err);
+    console.error('❌ Erreur critique lors du chargement:', err);
   }
 }
 
