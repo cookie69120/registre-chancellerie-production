@@ -339,7 +339,7 @@ async function loadAppData() {
 
     // Charger le journal
     const { data: journal, error: journalError } = await supabaseClient
-      .from('audit_journal')
+      .from('modification_journal')
       .select('*')
 
     if (journalError) throw journalError;
@@ -610,7 +610,7 @@ async function logAction(entityType, entityId, action, description) {
     };
 
     const { error } = await supabaseClient
-      .from('audit_journal')
+      .from('modification_journal')
       .insert([logEntry]);
     if (error) throw error;
 
