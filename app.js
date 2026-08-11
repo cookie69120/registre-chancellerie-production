@@ -605,7 +605,7 @@ async function logAction(entityType, entityId, action, description) {
       description,
       userId: appState.currentUser?.id,
       userName: appState.currentUser?.name,
-      timestamp: new Date().toISOString(),
+      created_at: new Date().toISOString(),
       createdAt: new Date().toISOString(),
     };
 
@@ -773,7 +773,7 @@ function renderJournalTable(records = appState.journal) {
     .map(
       (entry) => `
     <tr>
-      <td>${formatDate(entry.timestamp)}</td>
+      <td>${formatDate(entry.created_at)}</td>
       <td>${entry.userName || 'Système'}</td>
       <td>${entry.entityType || 'N/A'}</td>
       <td>${entry.action || 'N/A'}</td>
@@ -860,7 +860,7 @@ function renderDashboard() {
               .map(
                 (entry) => `
               <tr>
-                <td>${formatDate(entry.timestamp)}</td>
+                <td>${formatDate(entry.created_at)}</td>
                 <td>${entry.userName || 'Système'}</td>
                 <td>${entry.entityType || 'N/A'}</td>
                 <td>${entry.action || 'N/A'}</td>
@@ -1614,8 +1614,8 @@ function filterJournal() {
 
   const filtered = appState.journal.filter((entry) => {
     const matchesSearch = !searchTerm || entry.description?.toLowerCase().includes(searchTerm) || entry.userName?.toLowerCase().includes(searchTerm);
-    const matchesDateFrom = !dateFrom || new Date(entry.timestamp) >= new Date(dateFrom);
-    const matchesDateTo = !dateTo || new Date(entry.timestamp) <= new Date(dateTo);
+    const matchesDateFrom = !dateFrom || new Date(entry.created_at) >= new Date(dateFrom);
+    const matchesDateTo = !dateTo || new Date(entry.created_at) <= new Date(dateTo);
 
     return matchesSearch && matchesDateFrom && matchesDateTo;
   });
