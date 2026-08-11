@@ -300,9 +300,10 @@ async function loadAppData() {
   try {
     // Charger les enregistrements judiciaires
     const { data: judicial, error: judicialError } = await supabaseClient
-      .from('judicial_records')
-      .select('*')
-      .order('createdAt', { ascending: false });
+  .from('judicial_records')
+  .select('*')
+  .eq('createdBy', appState.currentUser.id)  // ← Ajoute cette ligne
+  .order('createdAt', { ascending: false });
 
     if (judicialError) throw judicialError;
     appState.judicialRecords = judicial || [];
@@ -1854,7 +1855,17 @@ function initForms() {
 // ============================================
 // DÉMARRAGE
 // ============================================
+// ✅ Ajouter AVANT le document.addEventListener('DOMContentLoaded')
 
+/**
+ * Assure que chaque utilisateur ne voit que SES données
+ */
+function addUserFilterToQuery(query) {
+  if (appState.currentUser) {
+    return query.eq('createdBy', appState.currentUser.id);
+  }
+  return query;
+}
 document.addEventListener('DOMContentLoaded', async () => {
   // Vérifier l'authentification existante
   const { data } = await supabaseClient.auth.getSession();
