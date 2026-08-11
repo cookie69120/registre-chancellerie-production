@@ -6,7 +6,7 @@ const SUPABASE_KEY = 'sb_publishable_hCFQ6GdF0AqQH32_qbKrkg_UJTbq70i';
 
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: {
-    storage: window.sessionStorage,
+    storage: window.localStorage,
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true
@@ -251,13 +251,10 @@ async function loginUser() {
 /**
  * Déconnexion
  */
-async function logoutUser() {
+async function logout() {
   try {
     await supabaseClient.auth.signOut();
-    appState.isAuthenticated = false;
-    appState.currentUser = null;
-    appState.activeSection = 'dashboard';
-    showAuthScreen();
+    // Le listener onAuthStateChange déclenchera automatiquement le logout
   } catch (err) {
     console.error('Erreur lors de la déconnexion:', err);
   }
@@ -297,11 +294,15 @@ function showAppScreen() {
  * Charge toutes les données de l'application
  */
 async function loadAppData() {
-  // ✅ Vérifier que l'utilisateur est bien défini
   if (!appState.currentUser || !appState.currentUser.id) {
-    console.error('Utilisateur non défini');
+    console.error('❌ Utilisateur non défini');
     return;
   }
+
+  console.log('📊 Loading data for user:', appState.currentUser.name, 'ID:', appState.currentUser.id);
+
+  // ... rest of function
+}
 
   try {
     // ... le reste de ton code ...
@@ -1859,42 +1860,58 @@ function initForms() {
 }
 
 // ============================================
-// DÉMARRAGE
+// GESTION DE L'AUTHENTIFICATION SUPABASE
 // ============================================
-// ✅ Ajouter AVANT le document.addEventListener('DOMContentLoaded')
 
-/**
- * Assure que chaque utilisateur ne voit que SES données
- */
-function addUserFilterToQuery(query) {
-  if (appState.currentUser) {
-    return query.eq('createdBy', appState.currentUser.id);
-  }
-  return query;
+let unsubscribeAuth = null;
+
+async function initializeAuth() {
+  // S'abonner aux changements d'authentification Supabase
+  unsubscribeAuth = supabaseClient.auth.onAuthStateChange(async (event, session) => {
+    console.log('Auth event:', event, 'Session:', session?.user?.email);
+
+    if (session && session.user) {
+      // ✅ Utilisateur connecté
+      const user = session.user;
+      appState.currentUser = {
+        id: user.id,
+        email: user.email,
+        name: user.user_metadata?.name || user.email,
+        role: user.user_metadata?.role || 'greffier',
+        approved: user.user_metadata?.approved || false,
+      };
+
+      appState.isAuthenticated = true;
+      console.log('User logged in:', appState.currentUser.name);
+      
+      await loadAppData();
+      showAppScreen();
+    } else {
+      // ❌ Utilisateur déconnecté
+      console.log('User logged out');
+      appState.currentUser = null;
+      appState.isAuthenticated = false;
+      appState.judicialRecords = [];
+      appState.certifications = [];
+      appState.receipts = [];
+      appState.journal = [];
+      showAuthScreen();
+    }
+  });
 }
+
+// Initialiser l'authentification au chargement
 document.addEventListener('DOMContentLoaded', async () => {
-  // Vérifier l'authentification existante
-  const { data } = await supabaseClient.auth.getSession();
-
-  if (data.session) {
-    const user = data.session.user;
-    appState.currentUser = {
-      id: user.id,
-      email: user.email,
-      name: user.user_metadata?.name || user.email,
-      role: user.user_metadata?.role || 'greffier',
-      approved: user.user_metadata?.approved || false,
-    };
-
-    appState.isAuthenticated = true;
-    await loadAppData();
-    showAppScreen();
-  } else {
-    showAuthScreen();
-  }
-
+  await initializeAuth();
   initForms();
   initFilters();
+});
+
+// Nettoyer le listener à la déconnexion
+window.addEventListener('beforeunload', () => {
+  if (unsubscribeAuth) {
+    unsubscribeAuth();
+  }
 });
 
 // ============================================
