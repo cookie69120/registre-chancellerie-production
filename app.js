@@ -1,13 +1,17 @@
+// ============================================
+// CONFIGURATION SUPABASE
+// ============================================
 const SUPABASE_URL = 'https://hqiyraklzdmgqmytjjjo.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_hCFQ6GdF0AqQH32_qbKrkg_UJTbq70i';
 
-const supabaseClient = supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_KEY
-);
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// ============================================
+// VARIABLES GLOBALES
+// ============================================
 const storageKey = 'imperialChancellerieData';
 const dateOptions = { year: 'numeric', month: '2-digit', day: '2-digit' };
+
 const appState = {
   users: [],
   judicialRecords: [],
@@ -21,1918 +25,1854 @@ const appState = {
   isAuthenticated: false,
 };
 
+// ============================================
+// ÉLÉMENTS DOM
+// ============================================
 const elements = {
-  publicView: document.getElementById('public-view'),
-  appShell: document.getElementById('app-shell'),
-  loginScreen: document.getElementById('login-screen'),
-  registerScreen: document.getElementById('register-screen'),
-  showRegister: document.getElementById('show-register'),
-  showLogin: document.getElementById('show-login'),
-  loginForm: document.getElementById('login-form'),
-  registerForm: document.getElementById('register-form'),
-  loginError: document.getElementById('login-error'),
-  registerMessage: document.getElementById('register-message'),
-  currentUserName: document.getElementById('current-user-name'),
-  currentUserRole: document.getElementById('current-user-role'),
-  logoutButton: document.getElementById('logout-button'),
-  navLinks: Array.from(document.querySelectorAll('.nav-link')),
-  sectionTitle: document.getElementById('section-title'),
-  sections: {
-    dashboard: document.getElementById('dashboard'),
-    judicial: document.getElementById('judicial'),
-    certifications: document.getElementById('certifications'),
-    payments: document.getElementById('payments'),
-    users: document.getElementById('users'),
-    journal: document.getElementById('journal'),
-    settings: document.getElementById('settings'),
-  },
-  cardOpenJudicial: document.getElementById('card-open-judicial'),
-  cardOpenCertifications: document.getElementById('card-open-certifications'),
-  cardTotalFines: document.getElementById('card-total-fines'),
-  cardTotalDue: document.getElementById('card-total-due'),
-  cardTotalTreasury: document.getElementById('card-total-treasury'),
-  cardTotalChancellery: document.getElementById('card-total-chancellery'),
-  cardTotalCertifications: document.getElementById('card-total-certifications'),
-  cardPendingTotal: document.getElementById('card-pending-total'),
-  cardPendingTreasury: document.getElementById('card-pending-treasury'),
-  cardPendingChancellery: document.getElementById('card-pending-chancellery'),
-  cardArchivedJudicial: document.getElementById('card-archived-judicial'),
-  cardArchivedCertifications: document.getElementById('card-archived-certifications'),
-  dashboardLatestList: document.getElementById('dashboard-latest-list'),
-  statusNotStarted: document.getElementById('status-not-started'),
-  statusInProgress: document.getElementById('status-in-progress'),
-  statusCompleted: document.getElementById('status-completed'),
-  statusSuspended: document.getElementById('status-suspended'),
-  statusCancelled: document.getElementById('status-cancelled'),
-  statusRemaining: document.getElementById('status-remaining'),
-  judicialSearch: document.getElementById('judicial-search'),
-  judicialStatusFilter: document.getElementById('judicial-status-filter'),
-  judicialFineStatusFilter: document.getElementById('judicial-fine-status-filter'),
-  judicialShowArchived: document.getElementById('judicial-show-archived'),
-  judicialList: document.getElementById('judicial-list'),
-  newJudicialButton: document.getElementById('new-judicial-button'),
-  certificationSearch: document.getElementById('certification-search'),
-  certificationStatusFilter: document.getElementById('certification-status-filter'),
-  certificationShowArchived: document.getElementById('certification-show-archived'),
-  certificationList: document.getElementById('certification-list'),
-  newCertificationButton: document.getElementById('new-certification-button'),
-  cardTotalReceived: document.getElementById('card-total-received'),
-  cardReceivedTreasury: document.getElementById('card-received-treasury'),
-  cardReceivedChancellery: document.getElementById('card-received-chancellery'),
-  addReceiptButton: document.getElementById('add-receipt-button'),
-  receiptMessage: document.getElementById('receipt-message'),
-  receiptList: document.getElementById('receipt-list'),
-  usersList: document.getElementById('users-list'),
-  journalList: document.getElementById('journal-list'),
-  settingJudicialTreasury: document.getElementById('setting-judicial-treasury'),
-  settingCertificationTreasury: document.getElementById('setting-certification-treasury'),
-  settingJudicialDisplay: document.getElementById('setting-judicial-display'),
-  settingCertificationDisplay: document.getElementById('setting-certification-display'),
-  settingYear: document.getElementById('setting-year'),
-  settingInstitution: document.getElementById('setting-institution'),
-  settingCurrency: document.getElementById('setting-currency'),
-  settingsForm: document.getElementById('settings-form'),
-  refreshJudicialButton: document.getElementById('refresh-judicial-button'),
-  refreshCertificationButton: document.getElementById('refresh-certification-button'),
-  refreshDashboardButton: document.getElementById('refresh-dashboard-button'),
-  refreshPaymentsButton: document.getElementById('refresh-payments-button'),
-  refreshUsersButton: document.getElementById('refresh-users-button'),
-  refreshJournalButton: document.getElementById('refresh-journal-button'),
-  refreshStatusJudicial: document.getElementById('refresh-status-judicial'),
-  refreshStatusCertification: document.getElementById('refresh-status-certification'),
-  refreshStatusDashboard: document.getElementById('refresh-status-dashboard'),
-  refreshStatusPayments: document.getElementById('refresh-status-payments'),
-  refreshStatusUsers: document.getElementById('refresh-status-users'),
-  refreshStatusJournal: document.getElementById('refresh-status-journal'),
-};
-
-const authFields = {
-  email: document.getElementById('login-email'),
-  password: document.getElementById('login-password'),
-  name: document.getElementById('register-name'),
+  // Auth
+  authScreen: document.getElementById('auth-screen'),
+  appScreen: document.getElementById('app-screen'),
+  loginEmail: document.getElementById('login-email'),
+  loginPassword: document.getElementById('login-password'),
+  loginButton: document.getElementById('login-button'),
+  loginMessage: document.getElementById('login-message'),
   registerEmail: document.getElementById('register-email'),
   registerPassword: document.getElementById('register-password'),
+  registerName: document.getElementById('register-name'),
+  registerRole: document.getElementById('register-role'),
+  registerButton: document.getElementById('register-button'),
+  registerMessage: document.getElementById('register-message'),
+  logoutButton: document.getElementById('logout-button'),
+  currentUserName: document.getElementById('current-user-name'),
+  currentUserRole: document.getElementById('current-user-role'),
+
+  // Navigation
+  navSections: document.querySelectorAll('[data-section]'),
+
+  // Sections
+  dashboardSection: document.getElementById('dashboard-section'),
+  judicialSection: document.getElementById('judicial-section'),
+  certificationSection: document.getElementById('certification-section'),
+  paymentsSection: document.getElementById('payments-section'),
+  usersSection: document.getElementById('users-section'),
+  journalSection: document.getElementById('journal-section'),
+  settingsSection: document.getElementById('settings-section'),
+
+  // Formulaires Judicial
+  judicialForm: document.getElementById('judicial-form'),
+  judicialMessage: document.getElementById('judicial-message'),
+  judicialTableBody: document.getElementById('judicial-table-body'),
+  judicialFilter: document.getElementById('judicial-filter'),
+  judicialStatusFilter: document.getElementById('judicial-status-filter'),
+  judicialDateFrom: document.getElementById('judicial-date-from'),
+  judicialDateTo: document.getElementById('judicial-date-to'),
+  resetJudicialFilters: document.getElementById('reset-judicial-filters'),
+
+  // Formulaires Certification
+  certificationForm: document.getElementById('certification-form'),
+  certificationMessage: document.getElementById('certification-message'),
+  certificationTableBody: document.getElementById('certification-table-body'),
+  certificationFilter: document.getElementById('certification-filter'),
+  certificationStatusFilter: document.getElementById('certification-status-filter'),
+  certificationDateFrom: document.getElementById('certification-date-from'),
+  certificationDateTo: document.getElementById('certification-date-to'),
+  resetCertificationFilters: document.getElementById('reset-certification-filters'),
+
+  // Formulaires Receipts
+  receiptForm: document.getElementById('receipt-form'),
+  receiptMessage: document.getElementById('receipt-message'),
+  receiptTableBody: document.getElementById('receipt-table-body'),
+  receiptFilter: document.getElementById('receipt-filter'),
+  receiptStatusFilter: document.getElementById('receipt-status-filter'),
+  receiptDateFrom: document.getElementById('receipt-date-from'),
+  receiptDateTo: document.getElementById('receipt-date-to'),
+  resetReceiptFilters: document.getElementById('reset-receipt-filters'),
+
+  // Formulaires Users
+  usersTableBody: document.getElementById('users-table-body'),
+  pendingUsersTableBody: document.getElementById('pending-users-table-body'),
+
+  // Formulaires Journal
+  journalTableBody: document.getElementById('journal-table-body'),
+  journalFilter: document.getElementById('journal-filter'),
+  journalDateFrom: document.getElementById('journal-date-from'),
+  journalDateTo: document.getElementById('journal-date-to'),
+  resetJournalFilters: document.getElementById('reset-journal-filters'),
+
+  // Settings
+  settingsForm: document.getElementById('settings-form'),
+  settingsMessage: document.getElementById('settings-message'),
 };
 
-const dialog = {
-  createElement: (tag, className, text) => {
-    const el = document.createElement(tag);
-    if (className) el.className = className;
-    if (text) el.textContent = text;
-    return el;
-  },
-};
+// ============================================
+// FONCTIONS UTILITAIRES
+// ============================================
 
-async function loadState() {
+/**
+ * Formate une date en format JJ/MM/AAAA
+ */
+function formatDate(dateString) {
+  if (!dateString) return '';
+  return new Date(dateString).toLocaleDateString('fr-FR', dateOptions);
+}
+
+/**
+ * Formate une monnaie (Or)
+ */
+function formatCurrency(amount) {
+  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(amount || 0).replace('€', 'Or');
+}
+
+/**
+ * Vérifie si l'utilisateur est admin
+ */
+function isAdmin() {
+  return appState.currentUser?.role === 'admin';
+}
+
+/**
+ * Vérifie si l'utilisateur est greffier
+ */
+function isGreffier() {
+  return appState.currentUser?.role === 'greffier';
+}
+
+/**
+ * Vérifie si l'utilisateur peut éditer
+ */
+function canEdit() {
+  return isAdmin() || isGreffier();
+}
+
+/**
+ * Montre un message temporaire
+ */
+function showMessage(element, message, type = 'success', duration = 3000) {
+  if (!element) return;
+  element.textContent = message;
+  element.className = type === 'success' ? 'form-success' : 'form-error';
+  element.style.display = 'block';
+  if (duration > 0) {
+    setTimeout(() => {
+      element.style.display = 'none';
+    }, duration);
+  }
+}
+
+// ============================================
+// AUTHENTIFICATION SUPABASE
+// ============================================
+
+/**
+ * Enregistrer un nouvel utilisateur
+ */
+async function registerUser() {
+  const email = elements.registerEmail.value.trim();
+  const password = elements.registerPassword.value.trim();
+  const name = elements.registerName.value.trim();
+  const role = elements.registerRole.value;
+
+  if (!email || !password || !name || !role) {
+    showMessage(elements.registerMessage, '❌ Tous les champs sont obligatoires', 'error');
+    return;
+  }
+
   try {
-    const { data, error } = await supabaseClient
-      .from('app_settings')
-      .select('app_state')
-      .eq('id', 1)
-      .maybeSingle();
+    const { data, error } = await supabaseClient.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { name, role, approved: false },
+      },
+    });
 
     if (error) {
-      console.error('Erreur chargement Supabase :', error);
+      showMessage(elements.registerMessage, `❌ Erreur : ${error.message}`, 'error');
       return;
     }
 
-    if (data && data.app_state) {
-      // Merge defensively: fall back to current in-memory value for any
-      // field missing from the stored snapshot, instead of wiping it.
-      Object.assign(appState, {
-        users: Array.isArray(data.app_state.users) ? data.app_state.users : appState.users,
-        judicialRecords: Array.isArray(data.app_state.judicialRecords) ? data.app_state.judicialRecords : appState.judicialRecords,
-        certifications: Array.isArray(data.app_state.certifications) ? data.app_state.certifications : appState.certifications,
-        receipts: Array.isArray(data.app_state.receipts) ? data.app_state.receipts : appState.receipts,
-        journal: Array.isArray(data.app_state.journal) ? data.app_state.journal : appState.journal,
-        settings: data.app_state.settings || appState.settings,
-        counters: data.app_state.counters || appState.counters,
-        currentUser: data.app_state.currentUser ?? appState.currentUser,
-        activeSection: data.app_state.activeSection || appState.activeSection,
-        isAuthenticated: Boolean(data.app_state.isAuthenticated),
-      });
-
-      console.log('État chargé depuis Supabase');
-      console.log('Dossiers judiciaires chargés :', appState.judicialRecords.length);
-      console.log('Certifications chargées :', appState.certifications.length);
-      console.log('Utilisateur restauré :', appState.currentUser);
-      console.log('Authentifié :', appState.isAuthenticated);
-    } else {
-      console.log('Aucun état trouvé dans Supabase.');
-    }
-  } catch (error) {
-    console.error('Erreur inattendue lors du chargement :', error);
+    showMessage(elements.registerMessage, '✅ Inscription réussie ! En attente d\'approbation.', 'success');
+    elements.registerEmail.value = '';
+    elements.registerPassword.value = '';
+    elements.registerName.value = '';
+    elements.registerRole.value = 'greffier';
+  } catch (err) {
+    showMessage(elements.registerMessage, `❌ Erreur : ${err.message}`, 'error');
   }
 }
 
+/**
+ * Connexion d'un utilisateur
+ */
+async function loginUser() {
+  const email = elements.loginEmail.value.trim();
+  const password = elements.loginPassword.value.trim();
 
-function normalizeAppState(data = {}) {
-  appState.users = Array.isArray(data.users) ? data.users : [];
+  if (!email || !password) {
+    showMessage(elements.loginMessage, '❌ Email et mot de passe requis', 'error');
+    return;
+  }
 
-  appState.currentUser = data.currentUser || null;
+  try {
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-  appState.isAuthenticated = Boolean(
-    appState.currentUser &&
-    appState.currentUser.status === 'Habilité'
-  );
+    if (error) {
+      showMessage(elements.loginMessage, `❌ Erreur : ${error.message}`, 'error');
+      return;
+    }
 
-  appState.settings = {
-    judicialTreasuryPercentage: Number(
-      data.settings?.judicialTreasuryPercentage ??
-      data.settings?.treasuryPercentage ??
-      60
-    ),
-    certificationTreasuryPercentage: Number(
-      data.settings?.certificationTreasuryPercentage ??
-      data.settings?.treasuryPercentage ??
-      60
-    ),
-    referenceYear:
-      data.settings?.referenceYear ??
-      String(new Date().getFullYear()),
-    institution:
-      data.settings?.institution ??
-      'Registre de la Chancellerie impériale',
-    currency: data.settings?.currency ?? 'septimes',
-  };
+    const user = data.user;
+    appState.currentUser = {
+      id: user.id,
+      email: user.email,
+      name: user.user_metadata?.name || user.email,
+      role: user.user_metadata?.role || 'greffier',
+      approved: user.user_metadata?.approved || false,
+    };
 
-  appState.receipts = (data.receipts || []).map((receipt) => {
-    const normalized = { ...receipt };
-    const amount = Number(normalized.amount || 0);
-
-    const treasuryPercent = Number(
-      normalized.treasuryPercent ??
-      appState.settings.judicialTreasuryPercentage
-    );
-
-    normalized.treasuryPercent = treasuryPercent;
-    normalized.chancelleryPercent = 100 - treasuryPercent;
-    normalized.treasuryAmount = Math.round(
-      amount * treasuryPercent / 100
-    );
-    normalized.chancelleryAmount =
-      amount - normalized.treasuryAmount;
-
-    normalized.treasuryTransferred =
-      Boolean(normalized.treasuryTransferred);
-
-    normalized.chancelleryTransferred =
-      Boolean(normalized.chancelleryTransferred);
-
-    normalized.collectorName =
-      normalized.collectorName || '';
-
-    normalized.allocation =
-      `${normalized.treasuryPercent}% Trésor / ` +
-      `${normalized.chancelleryPercent}% Chancellerie`;
-
-    return normalized;
-  });
+    appState.isAuthenticated = true;
+    await loadAppData();
+    showAppScreen();
+  } catch (err) {
+    showMessage(elements.loginMessage, `❌ Erreur : ${err.message}`, 'error');
+  }
 }
 
-
-function resetState() {
-  const year = new Date().getFullYear();
-  appState.users = [
-    {
-      id: crypto.randomUUID(),
-      name: 'Chancelier impérial',
-      email: 'chancelier@empire.im',
-      password: 'Imperial123',
-      role: 'Chancelier',
-      status: 'Habilité',
-      createdAt: new Date().toISOString(),
-      lastActivity: null,
-    },
-    {
-      id: crypto.randomUUID(),
-      name: 'Magistrat Solenne',
-      email: 'magistrat@empire.im',
-      password: 'Magistrat123',
-      role: 'Magistrat',
-      status: 'Habilité',
-      createdAt: new Date().toISOString(),
-      lastActivity: null,
-    },
-    {
-      id: crypto.randomUUID(),
-      name: 'Scribe Aurèle',
-      email: 'scribe@empire.im',
-      password: 'Scribe123',
-      role: 'Scribe',
-      status: 'Habilité',
-      createdAt: new Date().toISOString(),
-      lastActivity: null,
-    },
-    {
-      id: crypto.randomUUID(),
-      name: 'Trésorier Valyn',
-      email: 'tresorier@empire.im',
-      password: 'Tresorier123',
-      role: 'Trésorier',
-      status: 'Habilité',
-      createdAt: new Date().toISOString(),
-      lastActivity: null,
-    },
-  ];
-  appState.settings = {
-    judicialTreasuryPercentage: 60,
-    certificationTreasuryPercentage: 60,
-    referenceYear: String(year),
-    institution: 'Registre de la Chancellerie impériale',
-    currency: 'septimes',
-  };
-  appState.journal = [];
-  appState.judicialRecords = [
-    {
-      id: crypto.randomUUID(),
-      reference: `CH-${year}-T-0001`,
-      suspect: 'Marius Valerius',
-      magistrate: 'Magistrat Solenne',
-      judgmentDate: new Date().toISOString().slice(0, 10),
-      qualification: 'Vol aggravé',
-      fineAmount: 15000,
-      sentence: 'Travail forcé sur les terres impériales',
-      sentenceStatus: 'En cours d’exécution',
-      judgmentReference: 'JUG-21-454',
-      judgmentLink: 'https://discord.gg/exemple',
-      treasuryAmount: 9000,
-      chancelleryAmount: 6000,
-      fineStatus: 'Partiellement réglée',
-      notes: 'Travail supervisé par la chancellerie.',
-      archived: false,
-      createdAt: new Date().toISOString(),
-      type: 'Judiciaire',
-    },
-  ];
-  appState.certifications = [
-    {
-      id: crypto.randomUUID(),
-      reference: `C-${year}-0001`,
-      candidateName: 'Helena de Brun',
-      instructor: 'Scribe Aurèle',
-      trainingDate: new Date().toISOString().slice(0, 10),
-      trainingType: 'Avocati',
-      amount: 9000,
-      treasuryAmount: 5400,
-      chancelleryAmount: 3600,
-      paymentStatus: 'Non réglée',
-      notes: 'Demande de certification pour la garde impériale.',
-      archived: false,
-      createdAt: new Date().toISOString(),
-      type: 'Certification',
-    },
-  ];
-  appState.receipts = [
-    {
-      id: crypto.randomUUID(),
-      date: new Date().toISOString().slice(0, 10),
-      dossierTitle: 'Marius Valerius',
-      reference: 'CH-' + year + '-T-0001',
-      type: 'Judiciaire',
-      amount: 6000,
-      treasuryPercent: appState.settings.judicialTreasuryPercentage,
-      chancelleryPercent: 100 - appState.settings.judicialTreasuryPercentage,
-      treasuryAmount: Math.round((6000 * appState.settings.judicialTreasuryPercentage) / 100),
-      chancelleryAmount: 6000 - Math.round((6000 * appState.settings.judicialTreasuryPercentage) / 100),
-      allocation: `${appState.settings.judicialTreasuryPercentage}% Trésor / ${100 - appState.settings.judicialTreasuryPercentage}% Chancellerie`,
-      method: 'Espèces',
-      recordedBy: 'Scribe Aurèle',
-    },
-  ];
-  appState.counters = { judicial: 1, certification: 1 };
-  appState.isAuthenticated = false;
-  saveState();
+/**
+ * Déconnexion
+ */
+async function logoutUser() {
+  try {
+    await supabaseClient.auth.signOut();
+    appState.isAuthenticated = false;
+    appState.currentUser = null;
+    appState.activeSection = 'dashboard';
+    showAuthScreen();
+  } catch (err) {
+    console.error('Erreur lors de la déconnexion:', err);
+  }
 }
 
-async function saveState() {
-  const { data, error } = await supabaseClient
-    .from('app_settings')
-    .upsert(
-      {
-        id: 1,
-        app_state: appState,
-      },
-      {
-        onConflict: 'id',
-      }
-    )
-    .select();
+/**
+ * Affiche l'écran d'authentification
+ */
+function showAuthScreen() {
+  elements.authScreen.style.display = 'flex';
+  elements.appScreen.style.display = 'none';
+  elements.loginEmail.value = '';
+  elements.loginPassword.value = '';
+  elements.registerEmail.value = '';
+  elements.registerPassword.value = '';
+  elements.registerName.value = '';
+  elements.registerRole.value = 'greffier';
+}
 
-  if (error) {
-    console.error('Erreur sauvegarde Supabase :', error);
+/**
+ * Affiche l'écran principal
+ */
+function showAppScreen() {
+  elements.authScreen.style.display = 'none';
+  elements.appScreen.style.display = 'flex';
+  elements.currentUserName.textContent = appState.currentUser?.name || 'Utilisateur';
+  elements.currentUserRole.textContent = appState.currentUser?.role === 'admin' ? 'Administrateur' : 'Greffier';
+  initNav();
+  setSection('dashboard');
+}
+
+// ============================================
+// CHARGEMENT & SAUVEGARDE DONNÉES SUPABASE
+// ============================================
+
+/**
+ * Charge toutes les données de l'application
+ */
+async function loadAppData() {
+  try {
+    // Charger les enregistrements judiciaires
+    const { data: judicial, error: judicialError } = await supabaseClient
+      .from('judicial_records')
+      .select('*')
+      .order('createdAt', { ascending: false });
+
+    if (judicialError) throw judicialError;
+    appState.judicialRecords = judicial || [];
+
+    // Charger les certifications
+    const { data: certifications, error: certError } = await supabaseClient
+      .from('certifications')
+      .select('*')
+      .order('createdAt', { ascending: false });
+
+    if (certError) throw certError;
+    appState.certifications = certifications || [];
+
+    // Charger les reçus
+    const { data: receipts, error: receiptError } = await supabaseClient
+      .from('receipts')
+      .select('*')
+      .order('createdAt', { ascending: false });
+
+    if (receiptError) throw receiptError;
+    appState.receipts = receipts || [];
+
+    // Charger les utilisateurs (admin seulement)
+    if (isAdmin()) {
+      const { data: users, error: usersError } = await supabaseClient
+        .from('users')
+        .select('*')
+        .order('createdAt', { ascending: false });
+
+      if (usersError) throw usersError;
+      appState.users = users || [];
+    }
+
+    // Charger le journal
+    const { data: journal, error: journalError } = await supabaseClient
+      .from('audit_journal')
+      .select('*')
+      .order('createdAt', { ascending: false });
+
+    if (journalError) throw journalError;
+    appState.journal = journal || [];
+
+    // Charger les settings
+    const { data: settings, error: settingsError } = await supabaseClient
+      .from('settings')
+      .select('*')
+      .single();
+
+    if (!settingsError && settings) {
+      appState.settings = settings;
+    } else {
+      appState.settings = {
+        judicialTreasuryPercentage: 70,
+        certificationPrice: 50,
+        institution: 'Chancellerie Impériale',
+      };
+    }
+
+    // Mettre à jour les compteurs
+    appState.counters.judicial = appState.judicialRecords.length;
+    appState.counters.certification = appState.certifications.length;
+
+    console.log('Données chargées avec succès');
+  } catch (err) {
+    console.error('Erreur lors du chargement des données:', err);
+  }
+}
+
+/**
+ * Sauvegarde un enregistrement judiciaire
+ */
+async function saveJudicialRecord(record) {
+  try {
+    if (record.id) {
+      const { error } = await supabaseClient
+        .from('judicial_records')
+        .update(record)
+        .eq('id', record.id);
+      if (error) throw error;
+    } else {
+      record.id = `JUD-${new Date().getFullYear()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+      record.createdAt = new Date().toISOString();
+      record.createdBy = appState.currentUser.id;
+      const { error } = await supabaseClient
+        .from('judicial_records')
+        .insert([record]);
+      if (error) throw error;
+    }
+
+    await loadAppData();
+    await logAction('judicial_record', record.id, record.id ? 'edit' : 'create', `Enregistrement : ${record.reference}`);
+    return true;
+  } catch (err) {
+    console.error('Erreur lors de la sauvegarde:', err);
     return false;
   }
-
-  console.log('État sauvegardé dans Supabase');
-  return true;
 }
 
-function capitalize(value) {
-  return String(value).charAt(0).toUpperCase() + String(value).slice(1);
-}
-
-function getRefreshElements(section) {
-  const key = capitalize(section);
-  return {
-    button: elements[`refresh${key}Button`],
-    status: elements[`refreshStatus${key}`],
-  };
-}
-
-function setRefreshState(section, isLoading) {
-  const target = getRefreshElements(section);
-  if (!target.button) return;
-  target.button.disabled = isLoading;
-  target.button.textContent = isLoading ? 'Rafraîchissement…' : 'Rafraîchir';
-  if (target.status) {
-    target.status.textContent = isLoading ? 'Chargement des données…' : '';
-    target.status.classList.toggle('hidden', !isLoading);
-    target.status.classList.toggle('error', false);
-  }
-}
-
-function showRefreshMessage(section, message, isError = false) {
-  const target = getRefreshElements(section);
-  if (!target.status) return;
-  target.status.textContent = message;
-  target.status.classList.toggle('hidden', false);
-  target.status.classList.toggle('error', Boolean(isError));
-}
-
-function clearRefreshMessage(section) {
-  const target = getRefreshElements(section);
-  if (!target.status) return;
-  target.status.textContent = '';
-  target.status.classList.add('hidden');
-  target.status.classList.remove('error');
-}
-
-function renderAppContent() {
-  renderDashboard();
-  renderJudicialList();
-  renderCertificationList();
-  renderReceiptOptions();
-  renderReceiptTable();
-  renderUsersList();
-  renderJournal();
-  renderSettings();
-}
-
-async function refreshSection(section) {
-  const currentSection = section || appState.activeSection || 'dashboard';
-  setRefreshState(currentSection, true);
+/**
+ * Sauvegarde une certification
+ */
+async function saveCertification(cert) {
   try {
-    await loadState();
-    if (appState.isAuthenticated && appState.currentUser) {
-      const activeUser = appState.users.find((user) => user.id === appState.currentUser.id);
-      appState.currentUser = activeUser || appState.currentUser;
-      updateAuthView();
-      ensureAuthVisibility();
-      setSection(currentSection);
-      renderAppContent();
-      showRefreshMessage(currentSection, 'Données rechargées avec succès.', false);
+    if (cert.id) {
+      const { error } = await supabaseClient
+        .from('certifications')
+        .update(cert)
+        .eq('id', cert.id);
+      if (error) throw error;
     } else {
-      showPublicScreen();
-      showRefreshMessage(currentSection, 'Vous devez être connecté pour rafraîchir.', true);
+      cert.id = `CERT-${new Date().getFullYear()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+      cert.createdAt = new Date().toISOString();
+      cert.createdBy = appState.currentUser.id;
+      const { error } = await supabaseClient
+        .from('certifications')
+        .insert([cert]);
+      if (error) throw error;
     }
-  } catch (error) {
-    console.error('Erreur de rafraîchissement de la section', error);
-    showRefreshMessage(currentSection, 'Impossible de recharger les données.', true);
-  } finally {
-    setTimeout(() => setRefreshState(currentSection, false), 400);
-  }
-}
 
-function formatDate(dateString) {
-  const date = new Date(dateString);
-  return date.toLocaleDateString('fr-FR', dateOptions);
-}
-
-function formatMoney(value) {
-  const amount = Number(value);
-  const unit = Math.abs(amount) === 1 ? 'Septim' : 'Septims';
-  return `${amount.toLocaleString('fr-FR')} ${unit}`;
-}
-
-function getSentenceStatusColor(status) {
-  switch (status) {
-    case 'Non commencée':
-      return 'status-red';
-    case "En cours d'exécution":
-      return 'status-orange';
-    case 'Exécutée':
-      return 'status-green';
-    default:
-      return '';
-  }
-}
-
-function getFineStatusColor(status) {
-  switch (status) {
-    case 'Non réglée':
-    case 'Non réglé':
-      return 'status-red';
-    case 'Partiellement réglée':
-    case 'Partiellement réglé':
-      return 'status-orange';
-    case 'Réglée':
-    case 'Réglé':
-      return 'status-green';
-    default:
-      return '';
-  }
-}
-
-const getPaymentStatusColor = getFineStatusColor;
-
-function getUserByEmail(email) {
-  return appState.users.find((user) => user.email.toLowerCase() === email.toLowerCase());
-}
-
-function getPermission(role) {
-  return {
-    canCreateJudicial: role === 'Chancelier' || role === 'Magistrat',
-    canEditJudicial: role === 'Chancelier' || role === 'Magistrat' || role === 'Scribe',
-    canArchiveJudicial: role === 'Chancelier' || role === 'Magistrat' || role === 'Scribe',
-    canCreateCertification: role === 'Chancelier' || role === 'Magistrat',
-    canEditCertification: role === 'Chancelier' || role === 'Scribe' || role === 'Magistrat',
-    canModifyReceipt: role === 'Chancelier',
-    canRecordReceipt: role !== 'Trésorier',
-    canManageUsers: role === 'Chancelier',
-    canChangeSettings: role === 'Chancelier',
-    canView: true,
-  };
-}
-
-function formatAccessRights(role) {
-  const perms = getPermission(role);
-  const granted = [];
-  if (perms.canCreateJudicial) granted.push('Créer dossiers judiciaires');
-  if (perms.canEditJudicial) granted.push('Modifier dossiers judiciaires');
-  if (perms.canArchiveJudicial) granted.push('Archiver dossiers');
-  if (perms.canCreateCertification) granted.push('Créer certifications');
-  if (perms.canEditCertification) granted.push('Modifier certifications');
-  if (perms.canRecordReceipt) granted.push('Enregistrer des recettes');
-  if (perms.canManageUsers) granted.push('Gérer utilisateurs');
-  if (perms.canChangeSettings) granted.push('Modifier paramètres');
-  return granted.length ? granted.join(', ') : 'Aucun';
-}
-
-function setSection(section) {
-  // Prevent access to sensitive sections for unauthorized roles
-  const permission = appState.currentUser ? getPermission(appState.currentUser.role) : { canManageUsers: false };
-  let target = section;
-  if ((section === 'journal' || section === 'users') && !permission.canManageUsers) {
-    target = 'dashboard';
-  }
-  appState.activeSection = target;
-  elements.sectionTitle.textContent = target === 'dashboard' ? 'Tableau de bord' : document.querySelector(`[data-section="${target}"]`).textContent;
-  elements.navLinks.forEach((button) => {
-    button.classList.toggle('active', button.dataset.section === target);
-  });
-  Object.entries(elements.sections).forEach(([key, el]) => {
-    el.classList.toggle('active', key === target);
-    el.classList.toggle('hidden', key !== target);
-  });
-}
-
-function showLoginView() {
-  elements.loginScreen.classList.remove('hidden');
-  elements.registerScreen.classList.add('hidden');
-}
-
-function showRegisterView() {
-  elements.loginScreen.classList.add('hidden');
-  elements.registerScreen.classList.remove('hidden');
-}
-
-function updateAuthView() {
-  const isAuthenticated = Boolean(appState.isAuthenticated && appState.currentUser);
-  document.body.classList.toggle('dashboard-view', isAuthenticated);
-  document.body.classList.toggle('login-view', !isAuthenticated);
-  if (isAuthenticated) {
-    elements.publicView.classList.add('hidden');
-    elements.appShell.classList.remove('hidden');
-  } else {
-    elements.publicView.classList.remove('hidden');
-    elements.appShell.classList.add('hidden');
-  }
-}
-
-function showPublicScreen() {
-  appState.isAuthenticated = false;
-  updateAuthView();
-  showLoginView();
-}
-
-function showAppScreen() {
-  updateAuthView();
-  setSection(appState.activeSection);
-}
-
-function renderDashboard() {
-  refreshRecordPaymentStatuses(true);
-  const openJudicial = appState.judicialRecords.filter((record) => !record.archived).length;
-  const archivedJudicial = appState.judicialRecords.filter((record) => record.archived).length;
-  const openCertifications = appState.certifications.filter((record) => !record.archived).length;
-  const archivedCertifications = appState.certifications.filter((record) => record.archived).length;
-  const totalFines = appState.judicialRecords.reduce((sum, record) => sum + Number(record.fineAmount || 0), 0);
-  const totalTreasury = appState.receipts
-    .filter((receipt) => receipt.cancelled !== true)
-    .reduce((sum, receipt) => sum + Number(receipt.treasuryAmount || 0), 0);
-  const totalChancellery = appState.receipts
-    .filter((receipt) => receipt.cancelled !== true)
-    .reduce((sum, receipt) => sum + Number(receipt.chancelleryAmount || 0), 0);
-  const totalCertificationsAmount = appState.certifications.reduce((sum, record) => sum + Number(record.amount || 0), 0);
-  const totalDue = [
-    ...appState.judicialRecords,
-    ...appState.certifications,
-  ].reduce((sum, record) => sum + getRecordRemainingAmount(record), 0);
-  // Transfer / pending computation
-  const validReceipts = appState.receipts.filter((r) => r.cancelled !== true);
-  const totalTransferredTreasury = validReceipts.reduce((sum, r) => sum + (r.treasuryTransferred ? Number(r.treasuryAmount || 0) : 0), 0);
-  const totalTransferredChancellery = validReceipts.reduce((sum, r) => sum + (r.chancelleryTransferred ? Number(r.chancelleryAmount || 0) : 0), 0);
-  const totalPendingTreasury = validReceipts.reduce((sum, r) => sum + ((r.treasuryTransferred) ? 0 : Number(r.treasuryAmount || 0)), 0);
-  const totalPendingChancellery = validReceipts.reduce((sum, r) => sum + ((r.chancelleryTransferred) ? 0 : Number(r.chancelleryAmount || 0)), 0);
-  const totalPending = totalPendingTreasury + totalPendingChancellery;
-  elements.cardOpenJudicial.textContent = openJudicial;
-  elements.cardArchivedJudicial.textContent = archivedJudicial;
-  elements.cardOpenCertifications.textContent = openCertifications;
-  elements.cardArchivedCertifications.textContent = archivedCertifications;
-  elements.cardTotalDue.textContent = formatMoney(totalDue);
-  elements.cardTotalCertifications.textContent = formatMoney(totalCertificationsAmount);
-  elements.cardTotalFines.textContent = formatMoney(totalFines);
-  elements.cardTotalTreasury.textContent = formatMoney(totalTransferredTreasury);
-  elements.cardTotalChancellery.textContent = formatMoney(totalTransferredChancellery);
-  if (elements.cardPendingTotal) elements.cardPendingTotal.textContent = formatMoney(totalPending);
-  if (elements.cardPendingTreasury) elements.cardPendingTreasury.textContent = formatMoney(totalPendingTreasury);
-  if (elements.cardPendingChancellery) elements.cardPendingChancellery.textContent = formatMoney(totalPendingChancellery);
-  const latest = [...appState.judicialRecords, ...appState.certifications].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
-  elements.dashboardLatestList.innerHTML = latest.map((item) => {
-    const subject = item.type === 'Judiciaire' ? item.suspect : item.candidateName;
-    const amount = item.type === 'Judiciaire' ? item.fineAmount : item.amount;
-    return `
-      <tr>
-        <td>${item.reference}</td>
-        <td>${item.type}</td>
-        <td>${subject}</td>
-        <td>${formatDate(item.createdAt)}</td>
-        <td>${item.archived ? 'Archivé' : 'Actif'}</td>
-        <td>${formatMoney(amount)}</td>
-      </tr>
-    `;
-  }).join('') || '<tr><td colspan="6">Aucun dossier récent.</td></tr>';
-  const statusCounts = {
-    'Non commencée': 0,
-    'En cours d’exécution': 0,
-    'Exécutée': 0,
-    'Suspendue': 0,
-    'Annulée': 0,
-  };
-  appState.judicialRecords.forEach((record) => {
-    if (record.sentenceStatus in statusCounts) {
-      statusCounts[record.sentenceStatus] += 1;
-    }
-  });
-  elements.statusNotStarted.textContent = statusCounts['Non commencée'];
-  elements.statusInProgress.textContent = statusCounts['En cours d’exécution'];
-  elements.statusCompleted.textContent = statusCounts['Exécutée'];
-  elements.statusSuspended.textContent = statusCounts['Suspendue'];
-  elements.statusCancelled.textContent = statusCounts['Annulée'];
-  const remaining = appState.judicialRecords.filter((record) => ['Non commencée', 'En cours d’exécution', 'Suspendue'].includes(record.sentenceStatus)).length;
-  elements.statusRemaining.textContent = remaining;
-}
-
-function getRecordReceipts(record) {
-  return appState.receipts.filter((receipt) => {
-    if (receipt.cancelled === true) return false;
-    if (receipt.type !== record.type) return false;
-    if (receipt.recordId && receipt.recordId === record.id) return true;
-    return receipt.reference === record.reference;
-  });
-}
-
-function getRecordRemainingAmount(record) {
-  if (!record) return 0;
-  const amount = Number(record.type === 'Judiciaire' ? record.fineAmount || 0 : record.amount || 0);
-  const paid = getRecordReceipts(record).reduce((sum, receipt) => sum + Number(receipt.amount || 0), 0);
-  const remaining = Math.max(0, amount - paid);
-  if (record.type === 'Judiciaire' && record.fineStatus === 'Annulée') return 0;
-  if (record.type === 'Certification' && record.paymentStatus === 'Annulée') return 0;
-  return remaining;
-}
-
-function refreshRecordPaymentStatuses(saveChanges = false) {
-  let hasChanged = false;
-
-  appState.judicialRecords.forEach((record) => {
-    if (record.fineStatus === 'Annulée') return;
-    const remaining = getRecordRemainingAmount(record);
-    const newStatus = remaining === 0
-      ? 'Réglée'
-      : getRecordReceipts(record).length > 0
-        ? 'Partiellement réglée'
-        : 'Non réglée';
-    if (record.fineStatus !== newStatus) {
-      record.fineStatus = newStatus;
-      hasChanged = true;
-    }
-  });
-
-  appState.certifications.forEach((record) => {
-    if (record.paymentStatus === 'Annulée') return;
-    const remaining = getRecordRemainingAmount(record);
-    const newStatus = remaining === 0
-      ? 'Réglée'
-      : getRecordReceipts(record).length > 0
-        ? 'Partiellement réglée'
-        : 'Non réglée';
-    if (record.paymentStatus !== newStatus) {
-      record.paymentStatus = newStatus;
-      hasChanged = true;
-    }
-  });
-
-  if (saveChanges && hasChanged) {
-    saveState();
-  }
-}
-
-function renderJudicialList() {
-  const query = elements.judicialSearch.value.trim().toLowerCase();
-  const statusFilter = elements.judicialStatusFilter.value;
-  const fineStatusFilter = elements.judicialFineStatusFilter.value;
-  const showArchived = elements.judicialShowArchived.checked;
-  const permission = getPermission(appState.currentUser.role);
-  const list = appState.judicialRecords.filter((record) => {
-    if (!showArchived && record.archived) return false;
-    if (showArchived === false && record.archived) return false;
-    if (query) {
-      const text = `${record.reference} ${record.suspect} ${record.magistrate} ${record.qualification}`.toLowerCase();
-      if (!text.includes(query)) return false;
-    }
-    if (statusFilter !== 'all' && statusFilter !== 'none' && record.sentenceStatus !== statusFilter) return false;
-    if (statusFilter === 'none' && record.sentenceStatus !== 'Aucune' && record.sentenceStatus !== '') return false;
-    if (fineStatusFilter !== 'all' && record.fineStatus !== fineStatusFilter) return false;
+    await loadAppData();
+    await logAction('certification', cert.id, cert.id ? 'edit' : 'create', `Certification : ${cert.reference}`);
     return true;
-  });
-  
-  
-  
-  elements.judicialList.innerHTML = list.map((record) => {
-    const actions = [];
-    if (!record.archived && permission.canEditJudicial) {
-      actions.push(`<button class="action-btn primary" data-action="edit-judicial" data-id="${record.id}">Modifier</button>`);
-    }
-    if (!record.archived && permission.canArchiveJudicial) {
-      actions.push(`<button class="action-btn danger" data-action="archive-judicial" data-id="${record.id}">Archiver</button>`);
-    }
-    if (permission.canArchiveJudicial) {
-      actions.push(`<button class="action-btn danger" data-action="delete-judicial" data-id="${record.id}">Supprimer</button>`);
-    }
-    if (record.archived && permission.canArchiveJudicial) {
-      actions.push(`<button class="action-btn primary" data-action="restore-judicial" data-id="${record.id}">Restaurer</button>`);
-    }
-    
-    const discordLink = record.judgmentLink ? `<a href="${record.judgmentLink}" target="_blank" class="discord-link-btn" title="Ouvrir le lien Discord">🔗</a>` : '—';
-    
-    return `
-      <tr>
-        <td>${record.reference}</td>
-        <td>${record.suspect}</td>
-        <td>${record.magistrate}</td>
-        <td>${record.qualification}</td>
-        <td>${formatMoney(record.fineAmount)}</td>
-        <td>${formatMoney(record.treasuryAmount)}</td>
-        <td>${formatMoney(record.chancelleryAmount)}</td>
-        <td>${record.sentence || 'Aucune'}</td>
-        <td class="status-cell ${getSentenceStatusColor(record.sentenceStatus)}">${record.sentenceStatus}</td>
-        <td class="status-cell ${getFineStatusColor(record.fineStatus)}">${record.fineStatus}</td>
-        <td class="discord-cell">${discordLink}</td>
-        <td class="table-actions">${actions.join('')}</td>
-      </tr>
-    `;
-  }).join('') || '<tr><td colspan="12">Aucun dossier à afficher.</td></tr>';
+  } catch (err) {
+    console.error('Erreur lors de la sauvegarde:', err);
+    return false;
+  }
 }
 
-function renderCertificationList() {
-  const query = elements.certificationSearch.value.trim().toLowerCase();
-  const statusFilter = elements.certificationStatusFilter.value;
-  const showArchived = elements.certificationShowArchived.checked;
-  const permission = getPermission(appState.currentUser.role);
-  const list = appState.certifications.filter((record) => {
-    if (!showArchived && record.archived) return false;
-    if (query) {
-      const text = `${record.reference} ${record.candidateName} ${record.instructor}`.toLowerCase();
-      if (!text.includes(query)) return false;
+/**
+ * Sauvegarde un reçu
+ */
+async function saveReceipt(receipt) {
+  try {
+    if (receipt.id) {
+      const { error } = await supabaseClient
+        .from('receipts')
+        .update(receipt)
+        .eq('id', receipt.id);
+      if (error) throw error;
+    } else {
+      receipt.id = `RCP-${new Date().getFullYear()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+      receipt.createdAt = new Date().toISOString();
+      receipt.createdBy = appState.currentUser.id;
+      const { error } = await supabaseClient
+        .from('receipts')
+        .insert([receipt]);
+      if (error) throw error;
     }
-    if (statusFilter !== 'all' && record.paymentStatus !== statusFilter) return false;
+
+    await loadAppData();
+    await logAction('receipt', receipt.id, receipt.id ? 'edit' : 'create', `Reçu : ${receipt.reference}`);
     return true;
-  });
-  elements.certificationList.innerHTML = list.map((record) => {
-    const actions = [];
-    if (!record.archived && permission.canEditCertification) {
-      actions.push(`<button class="action-btn primary" data-action="edit-certification" data-id="${record.id}">Modifier</button>`);
-    }
-    if (!record.archived && permission.canArchiveJudicial) {
-      actions.push(`<button class="action-btn danger" data-action="archive-certification" data-id="${record.id}">Archiver</button>`);
-    }
-    if (!record.archived && permission.canArchiveJudicial) {
-      actions.push(`<button class="action-btn danger" data-action="delete-certification" data-id="${record.id}">Supprimer</button>`);
-    }
-    if (record.archived && permission.canArchiveJudicial) {
-      actions.push(`<button class="action-btn primary" data-action="restore-certification" data-id="${record.id}">Restaurer</button>`);
-    }
-    return `
-      <tr>
-        <td>${record.reference}</td>
-        <td>${record.candidateName}</td>
-        <td>${record.instructor}</td>
-        <td>${formatDate(record.trainingDate)}</td>
-        <td>${record.trainingType}</td>
-        <td>${formatMoney(record.amount)}</td>
-        <td>${formatMoney(record.treasuryAmount)}</td>
-        <td>${formatMoney(record.chancelleryAmount)}</td>
-        <td class="status-cell ${getPaymentStatusColor(record.paymentStatus)}">${record.paymentStatus}</td>
-        <td class="table-actions">${actions.join('')}</td>
-      </tr>
-    `;
-  }).join('') || '<tr><td colspan="10">Aucune demande à afficher.</td></tr>';
+  } catch (err) {
+    console.error('Erreur lors de la sauvegarde:', err);
+    return false;
+  }
 }
 
-function renderReceiptTable() {
-  const validReceipts = appState.receipts.filter((item) => item.cancelled !== true);
-  const totalReceived = validReceipts.reduce((sum, item) => sum + Number(item.amount || 0), 0);
-  const totalTransferredTreasury = validReceipts.reduce((sum, item) => sum + (item.treasuryTransferred ? Number(item.treasuryAmount || 0) : 0), 0);
-  const totalTransferredChancellery = validReceipts.reduce((sum, item) => sum + (item.chancelleryTransferred ? Number(item.chancelleryAmount || 0) : 0), 0);
-  const totalPendingTreasury = validReceipts.reduce((sum, item) => sum + ((item.treasuryTransferred) ? 0 : Number(item.treasuryAmount || 0)), 0);
-  const totalPendingChancellery = validReceipts.reduce((sum, item) => sum + ((item.chancelleryTransferred) ? 0 : Number(item.chancelleryAmount || 0)), 0);
-  elements.cardTotalReceived.textContent = formatMoney(totalReceived);
-  elements.cardReceivedTreasury.textContent = formatMoney(totalTransferredTreasury);
-  elements.cardReceivedChancellery.textContent = formatMoney(totalTransferredChancellery);
-  const permission = getPermission(appState.currentUser?.role || '');
-  elements.receiptList.innerHTML = validReceipts.map((receipt) => {
-    const treasuryPercent = receipt.treasuryPercent ?? appState.settings.certificationTreasuryPercentage;
-    const chancelleryPercent = receipt.chancelleryPercent ?? (100 - treasuryPercent);
-    const allocation = receipt.allocation || `${treasuryPercent}% Trésor / ${chancelleryPercent}% Chancellerie`;
-    const treasuryAmount = Number(receipt.treasuryAmount ?? Math.round((receipt.amount || 0) * treasuryPercent / 100));
-    const chancelleryAmount = Number(receipt.chancelleryAmount ?? ((receipt.amount || 0) - treasuryAmount));
-    const treasuryTransferred = Boolean(receipt.treasuryTransferred);
-    const chancelleryTransferred = Boolean(receipt.chancelleryTransferred);
-    const actions = [];
-    if (permission.canModifyReceipt) {
-      actions.push(`<button class="action-btn primary" data-action="edit-receipt" data-id="${receipt.id}">Modifier</button>`);
-      actions.push(`<button class="action-btn danger" data-action="delete-receipt" data-id="${receipt.id}">Supprimer</button>`);
+/**
+ * Sauvegarde les settings
+ */
+async function saveSettings(settings) {
+  try {
+    const { data, error } = await supabaseClient
+      .from('settings')
+      .select('*')
+      .single();
+
+    if (!error && data) {
+      const { error: updateError } = await supabaseClient
+        .from('settings')
+        .update(settings)
+        .eq('id', data.id);
+      if (updateError) throw updateError;
+    } else {
+      const { error: insertError } = await supabaseClient
+        .from('settings')
+        .insert([settings]);
+      if (insertError) throw insertError;
     }
-    return `
-      <tr>
-        <td>${formatDate(receipt.date)}</td>
-        <td>${receipt.dossierTitle}</td>
-        <td>${receipt.reference}</td>
-        <td>${receipt.type}</td>
-        <td>${formatMoney(receipt.amount)}</td>
-        <td>${allocation}</td>
-        <td>
-          <div class="transfer-cell">
-            <div class="transfer-status ${treasuryTransferred ? 'status-green' : 'status-red'}">${treasuryTransferred ? 'Transférée' : 'Non transférée'}</div>
-            <div class="transfer-amount ${treasuryTransferred ? 'status-green' : 'status-red'}">${formatMoney(treasuryAmount)}</div>
-            <label class="checkbox-label"><input type="checkbox" data-action="toggle-transfer-treasury" data-id="${receipt.id}" ${treasuryTransferred ? 'checked' : ''}/> Transféré</label>
-          </div>
-        </td>
-        <td>
-          <div class="transfer-cell">
-            <div class="transfer-status ${chancelleryTransferred ? 'status-green' : 'status-red'}">${chancelleryTransferred ? 'Transférée' : 'Non transférée'}</div>
-            <div class="transfer-amount ${chancelleryTransferred ? 'status-green' : 'status-red'}">${formatMoney(chancelleryAmount)}</div>
-            <label class="checkbox-label"><input type="checkbox" data-action="toggle-transfer-chancellery" data-id="${receipt.id}" ${chancelleryTransferred ? 'checked' : ''}/> Transféré</label>
-          </div>
-        </td>
-        <td>${receipt.method}</td>
-        <td>${receipt.recordedBy}${receipt.collectorName ? ` — Collecté par: ${receipt.collectorName}` : ''}</td>
-        <td class="table-actions">${actions.join('')}</td>
-      </tr>
-    `;
-  }).join('') || '<tr><td colspan="11">Aucune recette enregistrée.</td></tr>';
+
+    appState.settings = settings;
+    await logAction('settings', 'settings', 'update', 'Paramètres mis à jour');
+    return true;
+  } catch (err) {
+    console.error('Erreur lors de la sauvegarde des settings:', err);
+    return false;
+  }
 }
 
-function renderReceiptOptions() {
-  return [
-    ...appState.judicialRecords.map((record) => ({ type: 'Judiciaire', id: record.id, title: `${record.suspect}${record.archived ? ' (archivé)' : ''}`, reference: record.reference })),
-    ...appState.certifications.map((record) => ({ type: 'Certification', id: record.id, title: `${record.candidateName}${record.archived ? ' (archivé)' : ''}`, reference: record.reference })),
-  ];
+/**
+ * Supprime un enregistrement judiciaire
+ */
+async function deleteJudicial(id) {
+  try {
+    const { error } = await supabaseClient
+      .from('judicial_records')
+      .delete()
+      .eq('id', id);
+    if (error) throw error;
+
+    await loadAppData();
+    await logAction('judicial_record', id, 'delete', `Enregistrement supprimé`);
+    return true;
+  } catch (err) {
+    console.error('Erreur lors de la suppression:', err);
+    return false;
+  }
 }
 
-function showReceiptModal() {
-  const permission = getPermission(appState.currentUser.role);
-  if (!permission.canRecordReceipt) return;
-  const dossiers = renderReceiptOptions();
-  const modal = document.createElement('div');
-  modal.className = 'modal-backdrop';
-  modal.innerHTML = `
-    <div class="modal-card">
-      <h3>Créer une nouvelle recette</h3>
-      <form id="receipt-modal-form">
-        <label>Rechercher un dossier<label class="input-label"><input type="search" id="receipt-modal-search" placeholder="Rechercher un dossier..." /></label></label>
-        <label>Dossier concerné<label class="input-label">
-          <select id="receipt-modal-dossier" name="dossier" required>
-            ${dossiers.map((item) => `<option value="${item.type}|${item.id}|${item.reference}|${item.title}">${item.type} — ${item.reference} — ${item.title}</option>`).join('')}
-          </select>
-        </label></label>
-        <label>Type de dossier<label class="input-label">
-          <select id="receipt-modal-type" disabled>
-            <option value="Judiciaire">Judiciaire</option>
-            <option value="Certification">Certification</option>
-          </select>
-        </label></label>
-        <label>Montant reçu<label class="input-label"><input type="number" name="amount" min="0" step="1" value="0" required /></label></label>
-          <label>Nom du collecteur des septims<label class="input-label"><input type="text" name="collectorName" placeholder="Nom et prénom" required /></label></label>
-        <div class="receipt-summary">
-          <div class="summary-line"><span>Pourcentage Trésor impérial</span><strong id="receipt-modal-treasury-percent">0%</strong></div>
-          <div class="summary-line"><span>Pourcentage Chancellerie</span><strong id="receipt-modal-chancellery-percent">0%</strong></div>
-          <div class="summary-line"><span>Montant reversé au Trésor</span><strong id="receipt-modal-treasury-amount">0 Septims</strong></div>
-          <div class="summary-line"><span>Montant conservé par la Chancellerie</span><strong id="receipt-modal-chancellery-amount">0 Septims</strong></div>
-        </div>
-        <label>Date de réception<label class="input-label"><input type="date" name="date" value="${new Date().toISOString().slice(0, 10)}" required /></label></label>
-        <label>Moyen de paiement<label class="input-label">
-          <select name="method" required>
-            <option value="Espèces">Espèces</option>
-            <option value="Virement bancaire">Virement bancaire</option>
-          </select>
-        </label></label>
-        <div class="form-actions">
-          <button type="submit" class="primary-btn">Enregistrer la recette</button>
-          <button type="button" class="secondary-btn" id="close-receipt-modal">Annuler</button>
-        </div>
-      </form>
-    </div>
-  `;
-  document.body.appendChild(modal);
-  const form = modal.querySelector('#receipt-modal-form');
-  const searchInput = modal.querySelector('#receipt-modal-search');
-  const dossierSelect = modal.querySelector('#receipt-modal-dossier');
-  const typeSelect = modal.querySelector('#receipt-modal-type');
-  const amountInput = modal.querySelector('[name="amount"]');
-  const treasuryPercentEl = modal.querySelector('#receipt-modal-treasury-percent');
-  const chancelleriePercentEl = modal.querySelector('#receipt-modal-chancellery-percent');
-  const treasuryAmountEl = modal.querySelector('#receipt-modal-treasury-amount');
-  const chancellerieAmountEl = modal.querySelector('#receipt-modal-chancellery-amount');
-  const updateType = () => {
-    const value = dossierSelect.value.split('|')[0];
-    typeSelect.value = value || 'Judiciaire';
-  };
-  const computeReceiptSummary = () => {
-    const amount = Number(amountInput.value) || 0;
-    const type = dossierSelect.value.split('|')[0] || 'Judiciaire';
-    const treasuryPercent = type === 'Judiciaire'
-      ? appState.settings.judicialTreasuryPercentage
-      : appState.settings.certificationTreasuryPercentage;
-    const chancelleryPercent = 100 - treasuryPercent;
-    const treasuryAmount = Math.round((amount * treasuryPercent) / 100);
-    const chancelleryAmount = amount - treasuryAmount;
-    treasuryPercentEl.textContent = `${treasuryPercent}%`;
-    chancelleriePercentEl.textContent = `${chancelleryPercent}%`;
-    treasuryAmountEl.textContent = formatMoney(treasuryAmount);
-    chancellerieAmountEl.textContent = formatMoney(chancelleryAmount);
-    return { treasuryPercent, chancelleryPercent, treasuryAmount, chancelleryAmount };
-  };
-  const updateDossierOptions = () => {
-    const filter = searchInput.value.trim().toLowerCase();
-    dossierSelect.innerHTML = dossiers
-      .filter((item) => `${item.type} ${item.reference} ${item.title}`.toLowerCase().includes(filter))
-      .map((item) => `<option value="${item.type}|${item.id}|${item.reference}|${item.title}">${item.type} — ${item.reference} — ${item.title}</option>`)
-      .join('');
-    if (!dossierSelect.value && dossierSelect.options.length > 0) {
-      dossierSelect.selectedIndex = 0;
-    }
-    updateType();
-    computeReceiptSummary();
-  };
-  searchInput.addEventListener('input', updateDossierOptions);
-  dossierSelect.addEventListener('change', () => {
-    updateType();
-    computeReceiptSummary();
-  });
-  amountInput.addEventListener('input', computeReceiptSummary);
-  updateType();
-  computeReceiptSummary();
-  form.addEventListener('submit', (event) => {
-    event.preventDefault();
-    const data = new FormData(form);
-    const selected = data.get('dossier') || dossierSelect.value;
-    const [type, recordId, reference, title] = selected.split('|');
-    const amount = Number(data.get('amount'));
-    const summary = computeReceiptSummary();
-    if (!selected || !amount || amount < 0) {
-      elements.receiptMessage.textContent = 'Veuillez sélectionner un dossier valide et saisir un montant positif.';
-      elements.receiptMessage.className = 'form-error';
-      elements.receiptMessage.classList.remove('hidden');
-      return;
-    }
-    const collector = (data.get('collectorName') || '').trim();
-    if (!collector) {
-      elements.receiptMessage.textContent = 'Veuillez indiquer le nom du collecteur.';
-      elements.receiptMessage.className = 'form-error';
-      elements.receiptMessage.classList.remove('hidden');
-      return;
-    }
+/**
+ * Supprime une certification
+ */
+async function deleteCertification(id) {
+  try {
+    const { error } = await supabaseClient
+      .from('certifications')
+      .delete()
+      .eq('id', id);
+    if (error) throw error;
 
-    const receipt = {
-      id: crypto.randomUUID(),
-      date: data.get('date') || new Date().toISOString().slice(0, 10),
-      recordId,
-      dossierTitle: title,
-      reference,
-      type,
-      amount,
-      allocation: `${summary.treasuryPercent}% Trésor / ${summary.chancelleryPercent}% Chancellerie`,
-      treasuryPercent: summary.treasuryPercent,
-      chancelleryPercent: summary.chancelleryPercent,
-      treasuryAmount: summary.treasuryAmount,
-      chancelleryAmount: summary.chancelleryAmount,
-      treasuryTransferred: false,
-      chancelleryTransferred: false,
-      method: data.get('method'),
-      recordedBy: appState.currentUser.name,
-      collectorName: collector,
+    await loadAppData();
+    await logAction('certification', id, 'delete', `Certification supprimée`);
+    return true;
+  } catch (err) {
+    console.error('Erreur lors de la suppression:', err);
+    return false;
+  }
+}
+
+/**
+ * Supprime un reçu
+ */
+async function deleteReceipt(id) {
+  try {
+    const { error } = await supabaseClient
+      .from('receipts')
+      .delete()
+      .eq('id', id);
+    if (error) throw error;
+
+    await loadAppData();
+    await logAction('receipt', id, 'delete', `Reçu supprimé`);
+    return true;
+  } catch (err) {
+    console.error('Erreur lors de la suppression:', err);
+    return false;
+  }
+}
+
+/**
+ * Approuve un utilisateur
+ */
+async function approveUser(userId) {
+  try {
+    const { error } = await supabaseClient
+      .from('users')
+      .update({ approved: true })
+      .eq('id', userId);
+    if (error) throw error;
+
+    await loadAppData();
+    await logAction('user', userId, 'approve', 'Utilisateur approuvé');
+    return true;
+  } catch (err) {
+    console.error('Erreur lors de l\'approbation:', err);
+    return false;
+  }
+}
+
+/**
+ * Supprime un utilisateur
+ */
+async function deleteUser(userId) {
+  try {
+    const { error } = await supabaseClient
+      .from('users')
+      .delete()
+      .eq('id', userId);
+    if (error) throw error;
+
+    await loadAppData();
+    await logAction('user', userId, 'delete', 'Utilisateur supprimé');
+    return true;
+  } catch (err) {
+    console.error('Erreur lors de la suppression:', err);
+    return false;
+  }
+}
+
+/**
+ * Enregistre une action dans le journal d'audit
+ */
+async function logAction(entityType, entityId, action, description) {
+  try {
+    const logEntry = {
+      entityType,
+      entityId,
+      action,
+      description,
+      userId: appState.currentUser?.id,
+      userName: appState.currentUser?.name,
+      timestamp: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
     };
-    appState.receipts.push(receipt);
-    saveState();
-    logAction(appState.currentUser.name, 'Enregistrement d’une recette', type, reference, `Recette de ${formatMoney(amount)} enregistrée (${summary.treasuryPercent}% Trésor / ${summary.chancelleryPercent}% Chancellerie).`);
-    renderReceiptTable();
-    renderDashboard();
-    elements.receiptMessage.textContent = 'Recette enregistrée avec succès.';
-    elements.receiptMessage.className = 'form-info';
-    elements.receiptMessage.classList.remove('hidden');
-    modal.remove();
-  });
-  modal.querySelector('#close-receipt-modal').addEventListener('click', () => modal.remove());
+
+    const { error } = await supabaseClient
+      .from('audit_journal')
+      .insert([logEntry]);
+    if (error) throw error;
+
+    appState.journal.unshift(logEntry);
+  } catch (err) {
+    console.error('Erreur lors de l\'enregistrement du journal:', err);
+  }
 }
 
-function showReceiptForm(id) {
-  const permission = getPermission(appState.currentUser.role);
-  if (!permission.canModifyReceipt) return;
-  const receipt = appState.receipts.find((item) => item.id === id);
-  if (!receipt) return;
-  const modal = document.createElement('div');
-  modal.className = 'modal-backdrop';
-  modal.innerHTML = `
-    <div class="modal-card">
-      <h3>Modifier une recette</h3>
-      <form id="receipt-edit-form">
-        <label>Date<label class="input-label"><input type="date" name="date" value="${receipt.date}" required /></label></label>
-        <label>Référence<label class="input-label"><input type="text" name="reference" value="${receipt.reference}" readonly /></label></label>
-        <label>Dossier<label class="input-label"><input type="text" name="dossierTitle" value="${receipt.dossierTitle}" readonly /></label></label>
-        <label>Type<label class="input-label"><input type="text" name="type" value="${receipt.type}" readonly /></label></label>
-        <label>Montant reçu<label class="input-label"><input type="number" name="amount" min="0" value="${receipt.amount}" required /></label></label>
-        <label>Nom du collecteur des septims<label class="input-label"><input type="text" name="collectorName" value="${receipt.collectorName || ''}" required /></label></label>
-        <label>Moyen de paiement<label class="input-label">
-          <select name="method" required>
-            <option value="Espèces" ${receipt.method === 'Espèces' ? 'selected' : ''}>Espèces</option>
-            <option value="Virement bancaire" ${receipt.method === 'Virement bancaire' ? 'selected' : ''}>Virement bancaire</option>
-          </select>
-        </label></label>
-        <div class="receipt-summary">
-          <div class="summary-line"><span>Pourcentage Trésor impérial</span><strong id="receipt-edit-treasury-percent">${receipt.treasuryPercent}%</strong></div>
-          <div class="summary-line"><span>Pourcentage Chancellerie</span><strong id="receipt-edit-chancellery-percent">${receipt.chancelleryPercent}%</strong></div>
-          <div class="summary-line"><span>Montant reversé au Trésor</span><strong id="receipt-edit-treasury-amount">${formatMoney(receipt.treasuryAmount)}</strong></div>
-          <div class="summary-line"><span>Montant conservé par la Chancellerie</span><strong id="receipt-edit-chancellery-amount">${formatMoney(receipt.chancelleryAmount)}</strong></div>
-          <div class="summary-line"><label class="checkbox-label"><input type="checkbox" id="receipt-edit-treasury-transferred" ${receipt.treasuryTransferred ? 'checked' : ''}/> Transféré au Trésor</label></div>
-          <div class="summary-line"><label class="checkbox-label"><input type="checkbox" id="receipt-edit-chancellery-transferred" ${receipt.chancelleryTransferred ? 'checked' : ''}/> Transféré à la Chancellerie</label></div>
-        </div>
-        <div class="form-actions">
-          <button type="submit" class="primary-btn">Enregistrer les modifications</button>
-          <button type="button" class="secondary-btn" id="close-receipt-edit-modal">Annuler</button>
-        </div>
-      </form>
-    </div>
-  `;
-  document.body.appendChild(modal);
-  const form = modal.querySelector('#receipt-edit-form');
-  const amountInput = form.querySelector('[name="amount"]');
-  const treasuryPercentEl = form.querySelector('#receipt-edit-treasury-percent');
-  const chancelleriePercentEl = form.querySelector('#receipt-edit-chancellery-percent');
-  const treasuryAmountEl = form.querySelector('#receipt-edit-treasury-amount');
-  const chancellerieAmountEl = form.querySelector('#receipt-edit-chancellery-amount');
-  const collectorInput = form.querySelector('[name="collectorName"]');
-  const treasuryTransferredInput = form.querySelector('#receipt-edit-treasury-transferred');
-  const chancellerieTransferredInput = form.querySelector('#receipt-edit-chancellery-transferred');
-  const computeAmounts = () => {
-    const amount = Number(amountInput.value) || 0;
-    const type = receipt.type || 'Judiciaire';
-    const treasuryPercent = type === 'Judiciaire'
-      ? appState.settings.judicialTreasuryPercentage
-      : appState.settings.certificationTreasuryPercentage;
-    const chancelleryPercent = 100 - treasuryPercent;
-    const treasuryAmount = Math.round((amount * treasuryPercent) / 100);
-    const chancelleryAmount = amount - treasuryAmount;
-    treasuryPercentEl.textContent = `${treasuryPercent}%`;
-    chancelleriePercentEl.textContent = `${chancelleryPercent}%`;
-    treasuryAmountEl.textContent = formatMoney(treasuryAmount);
-    chancellerieAmountEl.textContent = formatMoney(chancelleryAmount);
-    return { treasuryPercent, chancelleryPercent, treasuryAmount, chancelleryAmount };
-  };
-  amountInput.addEventListener('input', computeAmounts);
-  computeAmounts();
-  form.addEventListener('submit', (event) => {
-    event.preventDefault();
-    const oldReceipt = { ...receipt };
-    const data = new FormData(form);
-    const amount = Number(data.get('amount')) || 0;
-    const values = computeAmounts();
-    receipt.date = data.get('date');
-    receipt.amount = amount;
-    receipt.method = data.get('method');
-    receipt.treasuryPercent = values.treasuryPercent;
-    receipt.chancelleryPercent = values.chancelleryPercent;
-    receipt.treasuryAmount = values.treasuryAmount;
-    receipt.chancelleryAmount = values.chancelleryAmount;
-    receipt.collectorName = (data.get('collectorName') || '').trim();
-    receipt.treasuryTransferred = treasuryTransferredInput.checked === true;
-    receipt.chancelleryTransferred = chancellerieTransferredInput.checked === true;
-    if (!receipt.collectorName) {
-      alert('Le nom du collecteur est requis.');
-      return;
-    }
-    receipt.allocation = `${values.treasuryPercent}% Trésor / ${values.chancelleryPercent}% Chancellerie`;
-    saveState();
-    logAction(
-      appState.currentUser.name,
-      'Modification d’une recette',
-      receipt.type,
-      receipt.reference,
-      `Recette modifiée : montant ${formatMoney(oldReceipt.amount)} → ${formatMoney(receipt.amount)}, méthode ${oldReceipt.method} → ${receipt.method}`
-    );
-    renderReceiptTable();
-    renderDashboard();
-    renderJournal();
-    modal.remove();
-  });
-  modal.querySelector('#close-receipt-edit-modal').addEventListener('click', () => modal.remove());
+// ============================================
+// RENDU DES SECTIONS
+// ============================================
+
+/**
+ * Rend le tableau des enregistrements judiciaires
+ */
+function renderJudicialTable(records = appState.judicialRecords) {
+  if (!elements.judicialTableBody) return;
+
+  elements.judicialTableBody.innerHTML = records
+    .filter(r => !r.archived)
+    .map(
+      (record) => `
+    <tr>
+      <td>${record.reference || 'N/A'}</td>
+      <td>${record.parties || 'N/A'}</td>
+      <td>${record.type || 'N/A'}</td>
+      <td>${record.verdict || 'N/A'}</td>
+      <td>${formatDate(record.date)}</td>
+      <td>${record.status || 'Nouveau'}</td>
+      <td>
+        ${canEdit() ? `
+          <button onclick="editJudicial('${record.id}')" class="action-btn edit-btn">✎</button>
+          <button onclick="archiveJudicial('${record.id}')" class="action-btn archive-btn">📦</button>
+          <button onclick="deleteJudicialConfirm('${record.id}')" class="action-btn delete-btn">🗑</button>
+        ` : ''}
+      </td>
+    </tr>
+  `
+    )
+    .join('');
 }
 
-function showDeletionConfirmation(message, confirmText = 'Confirmer', cancelText = 'Annuler') {
-  return new Promise((resolve) => {
-    const modal = document.createElement('div');
-    modal.className = 'modal-backdrop';
-    modal.innerHTML = `
-      <div class="modal-card">
-        <h3>Confirmation</h3>
-        <p class="confirm-message">${message}</p>
-        <div class="form-actions confirm-actions">
-          <button type="button" class="secondary-btn" id="confirm-cancel-button">${cancelText}</button>
-          <button type="button" class="primary-btn danger-btn" id="confirm-ok-button">${confirmText}</button>
+/**
+ * Rend le tableau des certifications
+ */
+function renderCertificationTable(records = appState.certifications) {
+  if (!elements.certificationTableBody) return;
+
+  elements.certificationTableBody.innerHTML = records
+    .filter(r => !r.archived)
+    .map(
+      (record) => `
+    <tr>
+      <td>${record.reference || 'N/A'}</td>
+      <td>${record.name || 'N/A'}</td>
+      <td>${record.type || 'N/A'}</td>
+      <td>${formatCurrency(record.price || 0)}</td>
+      <td>${formatDate(record.date)}</td>
+      <td>${record.status || 'Nouveau'}</td>
+      <td>
+        ${canEdit() ? `
+          <button onclick="editCertification('${record.id}')" class="action-btn edit-btn">✎</button>
+          <button onclick="archiveCertification('${record.id}')" class="action-btn archive-btn">📦</button>
+          <button onclick="deleteCertificationConfirm('${record.id}')" class="action-btn delete-btn">🗑</button>
+        ` : ''}
+      </td>
+    </tr>
+  `
+    )
+    .join('');
+}
+
+/**
+ * Rend le tableau des reçus
+ */
+function renderReceiptTable(records = appState.receipts) {
+  if (!elements.receiptTableBody) return;
+
+  elements.receiptTableBody.innerHTML = records
+    .filter(r => !r.archived)
+    .map(
+      (record) => `
+    <tr>
+      <td>${record.reference || 'N/A'}</td>
+      <td>${record.collector || 'N/A'}</td>
+      <td>${formatCurrency(record.amount || 0)}</td>
+      <td>${formatCurrency(record.treasuryAmount || 0)}</td>
+      <td>${formatCurrency(record.chancelleryAmount || 0)}</td>
+      <td>${formatDate(record.date)}</td>
+      <td>${record.paymentStatus || 'Nouveau'}</td>
+      <td>
+        ${canEdit() ? `
+          <button onclick="editReceiptForm('${record.id}')" class="action-btn edit-btn">✎</button>
+          <button onclick="toggleTreasuryTransfer('${record.id}')" class="action-btn ${record.treasuryTransferred ? 'transferred' : ''}">🏦</button>
+          <button onclick="toggleChancelleryTransfer('${record.id}')" class="action-btn ${record.chancelleryTransferred ? 'transferred' : ''}">💼</button>
+          <button onclick="archiveReceipt('${record.id}')" class="action-btn archive-btn">📦</button>
+          <button onclick="deleteReceiptConfirm('${record.id}')" class="action-btn delete-btn">🗑</button>
+        ` : ''}
+      </td>
+    </tr>
+  `
+    )
+    .join('');
+}
+
+/**
+ * Rend le tableau des utilisateurs
+ */
+function renderUsersTable() {
+  if (!elements.usersTableBody) return;
+
+  elements.usersTableBody.innerHTML = appState.users
+    .filter(u => u.approved)
+    .map(
+      (user) => `
+    <tr>
+      <td>${user.name || 'N/A'}</td>
+      <td>${user.email || 'N/A'}</td>
+      <td>${user.role === 'admin' ? 'Administrateur' : 'Greffier'}</td>
+      <td>
+        ${isAdmin() ? `
+          <button onclick="deleteUserConfirm('${user.id}')" class="action-btn delete-btn">🗑</button>
+        ` : ''}
+      </td>
+    </tr>
+  `
+    )
+    .join('');
+
+  if (elements.pendingUsersTableBody) {
+    elements.pendingUsersTableBody.innerHTML = appState.users
+      .filter(u => !u.approved)
+      .map(
+        (user) => `
+      <tr>
+        <td>${user.name || 'N/A'}</td>
+        <td>${user.email || 'N/A'}</td>
+        <td>${user.role === 'admin' ? 'Administrateur' : 'Greffier'}</td>
+        <td>
+          ${isAdmin() ? `
+            <button onclick="approveUserConfirm('${user.id}')" class="action-btn approve-btn">✓</button>
+            <button onclick="deleteUserConfirm('${user.id}')" class="action-btn delete-btn">🗑</button>
+          ` : ''}
+        </td>
+      </tr>
+    `
+      )
+      .join('');
+  }
+}
+
+/**
+ * Rend le tableau du journal
+ */
+function renderJournalTable(records = appState.journal) {
+  if (!elements.journalTableBody) return;
+
+  elements.journalTableBody.innerHTML = records
+    .map(
+      (entry) => `
+    <tr>
+      <td>${formatDate(entry.timestamp)}</td>
+      <td>${entry.userName || 'Système'}</td>
+      <td>${entry.entityType || 'N/A'}</td>
+      <td>${entry.action || 'N/A'}</td>
+      <td>${entry.description || 'N/A'}</td>
+    </tr>
+  `
+    )
+    .join('');
+}
+
+/**
+ * Rend le dashboard
+ */
+function renderDashboard() {
+  if (!elements.dashboardSection) return;
+
+  const judicialCount = appState.judicialRecords.filter(r => !r.archived).length;
+  const certificationCount = appState.certifications.filter(r => !r.archived).length;
+  const totalReceipts = appState.receipts
+    .filter(r => !r.archived)
+    .reduce((sum, r) => sum + (r.amount || 0), 0);
+
+  const treasuryTotal = appState.receipts
+    .filter(r => !r.archived)
+    .reduce((sum, r) => sum + (r.treasuryAmount || 0), 0);
+
+  const chancelleryTotal = appState.receipts
+    .filter(r => !r.archived)
+    .reduce((sum, r) => sum + (r.chancelleryAmount || 0), 0);
+
+  const lastActions = appState.journal.slice(0, 5);
+
+  elements.dashboardSection.innerHTML = `
+    <div class="dashboard-container">
+      <div class="dashboard-header">
+        <h1>🎖️ Chancellerie Impériale de Bordeciel</h1>
+        <p>Bienvenue, ${appState.currentUser?.name || 'Utilisateur'}</p>
+      </div>
+
+      <div class="dashboard-stats">
+        <div class="stat-card">
+          <h3>Dossiers Judiciaires</h3>
+          <p class="stat-number">${judicialCount}</p>
+          <a href="#" data-section="judicial">Voir les dossiers</a>
+        </div>
+
+        <div class="stat-card">
+          <h3>Certifications</h3>
+          <p class="stat-number">${certificationCount}</p>
+          <a href="#" data-section="certification">Voir les certifications</a>
+        </div>
+
+        <div class="stat-card">
+          <h3>Total Reçus</h3>
+          <p class="stat-number">${formatCurrency(totalReceipts)}</p>
+          <a href="#" data-section="payments">Voir les reçus</a>
+        </div>
+
+        <div class="stat-card">
+          <h3>Trésor</h3>
+          <p class="stat-number">${formatCurrency(treasuryTotal)}</p>
+        </div>
+
+        <div class="stat-card">
+          <h3>Chancellerie</h3>
+          <p class="stat-number">${formatCurrency(chancelleryTotal)}</p>
         </div>
       </div>
-    `;
-    document.body.appendChild(modal);
 
-    modal.querySelector('#confirm-cancel-button').addEventListener('click', () => {
-      modal.remove();
-      resolve(false);
-    });
-
-    modal.querySelector('#confirm-ok-button').addEventListener('click', () => {
-      modal.remove();
-      resolve(true);
-    });
-  });
+      <div class="dashboard-section">
+        <h2>📋 Dernières Activités</h2>
+        <table class="dashboard-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Utilisateur</th>
+              <th>Type</th>
+              <th>Action</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${lastActions
+              .map(
+                (entry) => `
+              <tr>
+                <td>${formatDate(entry.timestamp)}</td>
+                <td>${entry.userName || 'Système'}</td>
+                <td>${entry.entityType || 'N/A'}</td>
+                <td>${entry.action || 'N/A'}</td>
+                <td>${entry.description || 'N/A'}</td>
+              </tr>
+            `
+              )
+              .join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
 }
 
-function renderUsersList() {
-  const permission = appState.currentUser ? getPermission(appState.currentUser.role) : { canManageUsers: false };
-  if (!permission.canManageUsers) {
-    elements.usersList.innerHTML = '<tr><td colspan="8">Accès refusé.</td></tr>';
-    return;
-  }
-  const rows = appState.users.map((user) => {
-    const actionButtons = [];
-    if (permission.canManageUsers) {
-      if (user.status === 'En attente d’habilitation') {
-        actionButtons.push(`<button class="action-btn primary" data-action="approve-user" data-id="${user.id}">Approuver</button>`);
-        actionButtons.push(`<button class="action-btn danger" data-action="reject-user" data-id="${user.id}">Refuser</button>`);
-      }
-      if (user.status === 'Habilité') {
-        actionButtons.push(`<button class="action-btn danger" data-action="suspend-user" data-id="${user.id}">Suspendre</button>`);
-      }
-      if (user.status !== 'Habilité' && user.status !== 'Suspendu') {
-        actionButtons.push(`<button class="action-btn primary" data-action="reactivate-user" data-id="${user.id}">Réactiver</button>`);
-      }
-      if (user.status === 'Suspendu') {
-        actionButtons.push(`<button class="action-btn primary" data-action="reactivate-user" data-id="${user.id}">Réactiver</button>`);
-      }
-      // delete user (Chancelier only)
-      actionButtons.push(`<button class="action-btn danger" data-action="delete-user" data-id="${user.id}">Supprimer</button>`);
+// ============================================
+// FIN BLOC 1
+// ============================================
+// ============================================
+// FORMULAIRES & MODALES
+// ============================================
+
+/**
+ * Affiche le formulaire judiciaire
+ */
+function showJudicialForm(record = null) {
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.id = 'judicial-modal';
+
+  modal.innerHTML = `
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>${record ? '✎ Modifier un Dossier' : '➕ Nouveau Dossier Judiciaire'}</h2>
+        <button type="button" onclick="document.getElementById('judicial-modal').remove()" class="close-btn">✕</button>
+      </div>
+      <form id="temp-judicial-form">
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" name="date" value="${record?.date || new Date().toISOString().split('T')[0]}" required>
+        </div>
+
+        <div class="form-group">
+          <label>Référence</label>
+          <input type="text" name="reference" value="${record?.reference || ''}" placeholder="JUD-2026-XXXXX" required>
+        </div>
+
+        <div class="form-group">
+          <label>Parties Impliquées</label>
+          <textarea name="parties" placeholder="Nom des parties" required>${record?.parties || ''}</textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Type de Dossier</label>
+          <select name="type" required>
+            <option value="">-- Sélectionner --</option>
+            <option value="Civil" ${record?.type === 'Civil' ? 'selected' : ''}>Civil</option>
+            <option value="Criminel" ${record?.type === 'Criminel' ? 'selected' : ''}>Criminel</option>
+            <option value="Administratif" ${record?.type === 'Administratif' ? 'selected' : ''}>Administratif</option>
+            <option value="Autre" ${record?.type === 'Autre' ? 'selected' : ''}>Autre</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Verdict/Décision</label>
+          <textarea name="verdict" placeholder="Résumé du verdict" required>${record?.verdict || ''}</textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Statut</label>
+          <select name="status" required>
+            <option value="Nouveau" ${record?.status === 'Nouveau' ? 'selected' : ''}>Nouveau</option>
+            <option value="En cours" ${record?.status === 'En cours' ? 'selected' : ''}>En cours</option>
+            <option value="Clos" ${record?.status === 'Clos' ? 'selected' : ''}>Clos</option>
+            <option value="Suspendu" ${record?.status === 'Suspendu' ? 'selected' : ''}>Suspendu</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Notes Additionnelles</label>
+          <textarea name="notes" placeholder="Observations">${record?.notes || ''}</textarea>
+        </div>
+
+        <div class="modal-buttons">
+          <button type="button" onclick="document.getElementById('judicial-modal').remove()" class="secondary-btn">Annuler</button>
+          <button type="submit" class="primary-btn">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  modal.querySelector('#temp-judicial-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(modal.querySelector('#temp-judicial-form'));
+
+    const recordData = {
+      id: record?.id || null,
+      date: formData.get('date'),
+      reference: formData.get('reference'),
+      parties: formData.get('parties'),
+      type: formData.get('type'),
+      verdict: formData.get('verdict'),
+      status: formData.get('status'),
+      notes: formData.get('notes'),
+      archived: record?.archived || false,
+      createdAt: record?.createdAt || new Date().toISOString(),
+    };
+
+    const success = await saveJudicialRecord(recordData);
+
+    if (success) {
+      showMessage(elements.judicialMessage, '✅ Dossier enregistré avec succès.', 'success');
+      renderJudicialTable();
+      modal.remove();
+    } else {
+      showMessage(elements.judicialMessage, '❌ Erreur lors de l\'enregistrement.', 'error');
     }
-    const roleSelect = permission.canManageUsers ? `
-      <select class="role-select" data-id="${user.id}">
-        <option value="Chancelier" ${user.role === 'Chancelier' ? 'selected' : ''}>Chancelier</option>
-        <option value="Magistrat" ${user.role === 'Magistrat' ? 'selected' : ''}>Magistrat</option>
-        <option value="Scribe" ${user.role === 'Scribe' ? 'selected' : ''}>Scribe</option>
-        <option value="Trésorier" ${user.role === 'Trésorier' ? 'selected' : ''}>Trésorier</option>
-      </select>
-    ` : user.role;
-    return `
-      <tr>
-        <td>${user.name || user.id}</td>
-        <td>${user.email}</td>
-        <td>${roleSelect}</td>
-        <td>${user.status}</td>
-        <td>${formatAccessRights(user.role)}</td>
-        <td>${user.createdAt ? formatDate(user.createdAt) : '-'}</td>
-        <td>${user.lastActivity ? formatDate(user.lastActivity) : '-'}</td>
-        <td class="table-actions">${actionButtons.join('')}</td>
-      </tr>
-    `;
-  }).join('');
-  elements.usersList.innerHTML = rows || '<tr><td colspan="8">Aucun utilisateur enregistré.</td></tr>';
-}
-
-function renderJournal() {
-  const permission = appState.currentUser ? getPermission(appState.currentUser.role) : { canManageUsers: false };
-  if (!permission.canManageUsers) {
-    elements.journalList.innerHTML = '<tr><td colspan="7">Accès refusé.</td></tr>';
-    return;
-  }
-
-  elements.journalList.innerHTML = appState.journal.slice().reverse().map((entry) => `
-      <tr>
-        <td>${entry.user}</td>
-        <td>${formatDate(entry.date)}</td>
-        <td>${new Date(entry.date).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</td>
-        <td>${entry.action}</td>
-        <td>${entry.type}</td>
-        <td>${entry.reference}</td>
-        <td>${entry.description}</td>
-      </tr>
-    `).join('') || '<tr><td colspan="7">Aucune action enregistrée.</td></tr>';
-}
-
-function renderSettings() {
-  elements.settingJudicialTreasury.value = appState.settings.judicialTreasuryPercentage;
-  elements.settingCertificationTreasury.value = appState.settings.certificationTreasuryPercentage;
-  elements.settingJudicialDisplay.textContent = `${appState.settings.judicialTreasuryPercentage}% / ${100 - appState.settings.judicialTreasuryPercentage}%`;
-  elements.settingCertificationDisplay.textContent = `${appState.settings.certificationTreasuryPercentage}% / ${100 - appState.settings.certificationTreasuryPercentage}%`;
-  elements.settingYear.value = appState.settings.referenceYear;
-  elements.settingInstitution.value = appState.settings.institution;
-  elements.settingCurrency.value = appState.settings.currency;
-  const permission = getPermission(appState.currentUser.role);
-  elements.settingJudicialTreasury.disabled = !permission.canChangeSettings;
-  elements.settingCertificationTreasury.disabled = !permission.canChangeSettings;
-  elements.settingYear.disabled = !permission.canChangeSettings;
-  elements.settingInstitution.disabled = !permission.canChangeSettings;
-  elements.settingCurrency.disabled = !permission.canChangeSettings;
-  elements.settingsForm.querySelector('button').disabled = !permission.canChangeSettings;
-}
-
-function ensureAuthVisibility() {
-  elements.currentUserName.textContent = appState.currentUser.name;
-  elements.currentUserRole.textContent = appState.currentUser.role;
-  const permission = getPermission(appState.currentUser.role);
-  elements.newJudicialButton.style.display = permission.canCreateJudicial ? 'inline-flex' : 'none';
-  elements.newCertificationButton.style.display = permission.canCreateCertification ? 'inline-flex' : 'none';
-  elements.addReceiptButton.style.display = permission.canRecordReceipt ? 'inline-flex' : 'none';
-  // hide sensitive nav links for non-Chancelier
-  const journalLink = document.querySelector('[data-section="journal"]');
-  const usersLink = document.querySelector('[data-section="users"]');
-  if (journalLink) journalLink.style.display = permission.canManageUsers ? 'inline-flex' : 'none';
-  if (usersLink) usersLink.style.display = permission.canManageUsers ? 'inline-flex' : 'none';
-}
-
-function updateCurrentUserActivity() {
-  appState.currentUser.lastActivity = new Date().toISOString();
-  const user = appState.users.find((u) => u.id === appState.currentUser.id);
-  if (user) user.lastActivity = appState.currentUser.lastActivity;
-  saveState();
-}
-
-async function login(email, password) {
-  const { data, error } = await supabaseClient.auth.signInWithPassword({
-    email: email.trim(),
-    password
   });
-
-  if (error) {
-    console.error('Erreur de connexion Supabase :', error);
-    return 'Adresse électronique ou mot de passe invalide.';
-  }
-
-  const user = getUserByEmail(email);
-
-  if (!user) {
-    await supabaseClient.auth.signOut({ scope: 'local' });
-    return 'Compte trouvé dans Supabase, mais absent des utilisateurs de l’application.';
-  }
-
-  if (user.status !== 'Habilité') {
-    await supabaseClient.auth.signOut({ scope: 'local' });
-    return `Compte ${user.status.toLowerCase()} et inaccessible.`;
-  }
-
-  appState.currentUser = {
-    ...user,
-    authId: data.user.id
-  };
-
-  appState.isAuthenticated = true;
-
-  updateCurrentUserActivity();
-  await saveState();
-
-  return null;
 }
 
-async function handleLogin(event) {
-  event.preventDefault();
-  const email = authFields.email.value.trim();
-  const password = authFields.password.value;
-  const error = await login(email, password);
-  if (error) {
-    elements.loginError.textContent = error;
-    elements.loginError.classList.remove('hidden');
-    return;
-  }
-  elements.loginError.classList.add('hidden');
-  showAppScreen();
-  resetDataFilters();
-  ensureAuthVisibility();
-  renderDashboard();
-  renderJudicialList();
-  renderCertificationList();
-  renderReceiptOptions();
-  renderReceiptTable();
-  renderUsersList();
-  renderJournal();
-  renderSettings();
-}
-
-async function handleRegister(event) {
-  event.preventDefault();
-
-  const name = authFields.name.value.trim();
-  const email = authFields.registerEmail.value.trim();
-  const password = authFields.registerPassword.value;
-
-  if (!name || !email || !password) {
-    elements.registerMessage.textContent =
-      'Tous les champs sont obligatoires.';
-    elements.registerMessage.className = 'form-error';
-    elements.registerMessage.classList.remove('hidden');
-    return;
-  }
-
-  if (getUserByEmail(email)) {
-    elements.registerMessage.textContent =
-      'Cette adresse électronique est déjà utilisée.';
-    elements.registerMessage.className = 'form-error';
-    elements.registerMessage.classList.remove('hidden');
-    return;
-  }
-
-  const { data, error } = await supabaseClient.auth.signUp({
-    email,
-    password,
-    options: {
-      data: {
-        name,
-        role: 'Scribe',
-      },
-    },
-  });
-
-  if (error) {
-    console.error('Erreur lors de la création du compte :', error);
-    elements.registerMessage.textContent =
-      'Impossible de créer le compte : ' + error.message;
-    elements.registerMessage.className = 'form-error';
-    elements.registerMessage.classList.remove('hidden');
-    return;
-  }
-
-  const newUser = {
-    id: data.user.id,
-    name,
-    email,
-    role: 'Scribe',
-    status: 'En attente d’habilitation',
-    createdAt: new Date().toISOString(),
-    lastActivity: null,
-  };
-
-  appState.users.push(newUser);
-
-  logAction(
-    'Système',
-    'Demande d’habilitation',
-    'Utilisateur',
-    '',
-    `Nouvelle demande de ${name}`
-  );
-
-  await saveState();
-  renderUsersList();
-
-  elements.registerMessage.textContent =
-    'Votre demande est enregistrée. Attendez l’approbation du Chancelier.';
-  elements.registerMessage.className = 'form-info';
-  elements.registerMessage.classList.remove('hidden');
-
-  authFields.name.value = '';
-  authFields.registerEmail.value = '';
-  authFields.registerPassword.value = '';
-}
-
-function logAction(user, action, type, reference, description) {
-  appState.journal.push({ id: crypto.randomUUID(), user, action, type, reference, description, date: new Date().toISOString() });
-  saveState();
-  if (elements.journalList) renderJournal();
-}
-
-function addJudicialRecord(record) {
-  appState.judicialRecords.push(record);
-  logAction(appState.currentUser.name, 'Création d’un dossier', 'Judiciaire', record.reference, `Dossier créé pour ${record.suspect}`);
-  saveState();
-}
-
-function addCertification(record) {
-  appState.certifications.push(record);
-  logAction(appState.currentUser.name, 'Création d’un dossier', 'Certification', record.reference, `Certification créée pour ${record.candidateName}`);
-  saveState();
-}
-
-function updateRecord(type, id, updates) {
-  const collection = type === 'Judiciaire' ? appState.judicialRecords : appState.certifications;
-  const record = collection.find((item) => item.id === id);
+/**
+ * Édite un dossier judiciaire
+ */
+function editJudicial(id) {
+  const record = appState.judicialRecords.find(r => r.id === id);
   if (record) {
-    Object.assign(record, updates);
-    saveState();
-    logAction(appState.currentUser.name, "Modification d'un dossier", type, record.reference, `Dossier modifié (${record.reference})`);
+    showJudicialForm(record);
   }
 }
 
-function archiveRecord(type, id) {
-  const collection = type === 'Judiciaire' ? appState.judicialRecords : appState.certifications;
-  const record = collection.find((item) => item.id === id);
+/**
+ * Confirme la suppression d'un dossier judiciaire
+ */
+function deleteJudicialConfirm(id) {
+  if (confirm('Êtes-vous sûr de vouloir supprimer ce dossier ?')) {
+    deleteJudicial(id);
+    renderJudicialTable();
+    showMessage(elements.judicialMessage, '✅ Dossier supprimé.', 'success');
+  }
+}
+
+/**
+ * Archive un dossier judiciaire
+ */
+async function archiveJudicial(id) {
+  const record = appState.judicialRecords.find(r => r.id === id);
   if (record) {
     record.archived = true;
-    saveState();
-    logAction(appState.currentUser.name, 'Archivage d’un dossier', type, record.reference, `Dossier archivé`);
+    await saveJudicialRecord(record);
+    renderJudicialTable();
+    showMessage(elements.judicialMessage, '✅ Dossier archivé.', 'success');
   }
 }
 
-function restoreRecord(type, id) {
-  const collection = type === 'Judiciaire' ? appState.judicialRecords : appState.certifications;
-  const record = collection.find((item) => item.id === id);
+/**
+ * Restaure un dossier judiciaire
+ */
+async function restoreJudicial(id) {
+  const record = appState.judicialRecords.find(r => r.id === id);
   if (record) {
     record.archived = false;
-    saveState();
-    logAction(appState.currentUser.name, 'Restauration d’un dossier', type, record.reference, `Dossier restauré`);
+    await saveJudicialRecord(record);
+    renderJudicialTable();
+    showMessage(elements.judicialMessage, '✅ Dossier restauré.', 'success');
   }
 }
 
-function deleteJudicialRecord(id) {
-  const index = appState.judicialRecords.findIndex(
-    (item) => item.id === id
-  );
+// ============================================
+// CERTIFICATIONS
+// ============================================
 
-  if (index !== -1) {
-    const removed = appState.judicialRecords.splice(index, 1)[0];
+/**
+ * Affiche le formulaire de certification
+ */
+function showCertificationForm(cert = null) {
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.id = 'certification-modal';
 
-    // Mise à jour du compteur judiciaire
-    appState.counters.judicial = appState.judicialRecords.length;
+  modal.innerHTML = `
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>${cert ? '✎ Modifier une Certification' : '➕ Nouvelle Certification'}</h2>
+        <button type="button" onclick="document.getElementById('certification-modal').remove()" class="close-btn">✕</button>
+      </div>
+      <form id="temp-certification-form">
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" name="date" value="${cert?.date || new Date().toISOString().split('T')[0]}" required>
+        </div>
 
-    logAction(
-      appState.currentUser.name,
-      'Suppression d’un dossier judiciaire',
-      'Judiciaire',
-      removed.reference,
-      `Dossier judiciaire supprimé : ${removed.suspect}.`
-    );
+        <div class="form-group">
+          <label>Référence</label>
+          <input type="text" name="reference" value="${cert?.reference || ''}" placeholder="CERT-2026-XXXXX" required>
+        </div>
 
-    saveState();
-    renderJudicialList();
-    renderDashboard();
+        <div class="form-group">
+          <label>Nom du Demandeur</label>
+          <input type="text" name="name" value="${cert?.name || ''}" placeholder="Nom complet" required>
+        </div>
+
+        <div class="form-group">
+          <label>Type de Certification</label>
+          <select name="type" required>
+            <option value="">-- Sélectionner --</option>
+            <option value="Authentification" ${cert?.type === 'Authentification' ? 'selected' : ''}>Authentification</option>
+            <option value="Conformité" ${cert?.type === 'Conformité' ? 'selected' : ''}>Conformité</option>
+            <option value="Légalisation" ${cert?.type === 'Légalisation' ? 'selected' : ''}>Légalisation</option>
+            <option value="Autre" ${cert?.type === 'Autre' ? 'selected' : ''}>Autre</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Prix</label>
+          <input type="number" name="price" value="${cert?.price || appState.settings.certificationPrice || 50}" step="0.01" required>
+        </div>
+
+        <div class="form-group">
+          <label>Statut</label>
+          <select name="status" required>
+            <option value="Nouveau" ${cert?.status === 'Nouveau' ? 'selected' : ''}>Nouveau</option>
+            <option value="En traitement" ${cert?.status === 'En traitement' ? 'selected' : ''}>En traitement</option>
+            <option value="Délivré" ${cert?.status === 'Délivré' ? 'selected' : ''}>Délivré</option>
+            <option value="Rejeté" ${cert?.status === 'Rejeté' ? 'selected' : ''}>Rejeté</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Observations</label>
+          <textarea name="notes" placeholder="Notes">${cert?.notes || ''}</textarea>
+        </div>
+
+        <div class="modal-buttons">
+          <button type="button" onclick="document.getElementById('certification-modal').remove()" class="secondary-btn">Annuler</button>
+          <button type="submit" class="primary-btn">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  modal.querySelector('#temp-certification-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(modal.querySelector('#temp-certification-form'));
+
+    const certData = {
+      id: cert?.id || null,
+      date: formData.get('date'),
+      reference: formData.get('reference'),
+      name: formData.get('name'),
+      type: formData.get('type'),
+      price: Number(formData.get('price')) || 0,
+      status: formData.get('status'),
+      notes: formData.get('notes'),
+      archived: cert?.archived || false,
+      createdAt: cert?.createdAt || new Date().toISOString(),
+    };
+
+    const success = await saveCertification(certData);
+
+    if (success) {
+      showMessage(elements.certificationMessage, '✅ Certification enregistrée avec succès.', 'success');
+      renderCertificationTable();
+      modal.remove();
+    } else {
+      showMessage(elements.certificationMessage, '❌ Erreur lors de l\'enregistrement.', 'error');
+    }
+  });
+}
+
+/**
+ * Édite une certification
+ */
+function editCertification(id) {
+  const cert = appState.certifications.find(c => c.id === id);
+  if (cert) {
+    showCertificationForm(cert);
   }
 }
 
-function deleteCertificationRecord(id) {
-  const index = appState.certifications.findIndex((item) => item.id === id);
-  if (index !== -1) {
-    const removed = appState.certifications.splice(index, 1)[0];
-    saveState();
-    logAction(appState.currentUser.name, 'Suppression d’une demande de certification', 'Certification', removed.reference, `Demande de certification supprimée : ${removed.candidateName}.`);
-    renderCertificationList();
-    renderDashboard();
+/**
+ * Confirme la suppression d'une certification
+ */
+function deleteCertificationConfirm(id) {
+  if (confirm('Êtes-vous sûr de vouloir supprimer cette certification ?')) {
+    deleteCertification(id);
+    renderCertificationTable();
+    showMessage(elements.certificationMessage, '✅ Certification supprimée.', 'success');
   }
 }
 
-async function handleTableAction(event) {
-  if (!event.target.dataset.action) return;
-  const action = event.target.dataset.action;
-  const id = event.target.dataset.id;
-  if (action === 'edit-judicial') {
-    showJudicialForm(id);
+/**
+ * Archive une certification
+ */
+async function archiveCertification(id) {
+  const cert = appState.certifications.find(c => c.id === id);
+  if (cert) {
+    cert.archived = true;
+    await saveCertification(cert);
+    renderCertificationTable();
+    showMessage(elements.certificationMessage, '✅ Certification archivée.', 'success');
   }
-  if (action === 'edit-receipt') {
-    showReceiptForm(id);
+}
+
+/**
+ * Restaure une certification
+ */
+async function restoreCertification(id) {
+  const cert = appState.certifications.find(c => c.id === id);
+  if (cert) {
+    cert.archived = false;
+    await saveCertification(cert);
+    renderCertificationTable();
+    showMessage(elements.certificationMessage, '✅ Certification restaurée.', 'success');
   }
-  if (action === 'delete-receipt') {
-    const confirmed = await showDeletionConfirmation(
-      'Êtes-vous sûr de vouloir supprimer cette recette ? Cette action est irréversible.',
-      'Confirmer la suppression',
-      'Annuler'
-    );
-    if (!confirmed) return;
-    const index = appState.receipts.findIndex((item) => item.id === id);
-    if (index !== -1) {
-      const removed = appState.receipts.splice(index, 1)[0];
-      saveState();
-      logAction(appState.currentUser.name, 'Suppression d’une recette', removed.type, removed.reference, `Recette supprimée : ${formatMoney(removed.amount)}.`);
+}
+
+// ============================================
+// REÇUS & PAIEMENTS
+// ============================================
+
+/**
+ * Affiche le formulaire de reçu
+ */
+function showReceiptForm(receipt = null) {
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.id = 'receipt-modal';
+
+  modal.innerHTML = `
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>${receipt ? '✎ Modifier un Reçu' : '➕ Nouveau Reçu'}</h2>
+        <button type="button" onclick="document.getElementById('receipt-modal').remove()" class="close-btn">✕</button>
+      </div>
+      <form id="temp-receipt-form">
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" name="date" value="${receipt?.date || new Date().toISOString().split('T')[0]}" required>
+        </div>
+
+        <div class="form-group">
+          <label>Type d'Enregistrement</label>
+          <select name="recordType" required onchange="updateReceiptRecordOptions()">
+            <option value="">-- Sélectionner --</option>
+            <option value="judicial" ${receipt?.recordType === 'judicial' ? 'selected' : ''}>Dossier Judiciaire</option>
+            <option value="certification" ${receipt?.recordType === 'certification' ? 'selected' : ''}>Certification</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Enregistrement</label>
+          <select name="recordId" required>
+            <option value="">-- Sélectionner --</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Collecteur</label>
+          <input type="text" name="collector" value="${receipt?.collector || ''}" placeholder="Nom du collecteur" required>
+        </div>
+
+        <div class="form-group">
+          <label>Montant Total (Or)</label>
+          <input type="number" name="amount" value="${receipt?.amount || 0}" step="0.01" required onchange="updateReceiptDistribution()">
+        </div>
+
+        <div class="form-group">
+          <label>Pourcentage Trésor (%)</label>
+          <input type="number" name="treasuryPercent" value="${receipt?.treasuryPercent || appState.settings.judicialTreasuryPercentage || 70}" min="0" max="100" step="1" readonly>
+        </div>
+
+        <div class="form-group">
+          <label>Montant Trésor</label>
+          <input type="text" name="treasuryAmount" value="${formatCurrency(receipt?.treasuryAmount || 0)}" readonly>
+        </div>
+
+        <div class="form-group">
+          <label>Montant Chancellerie</label>
+          <input type="text" name="chancelleryAmount" value="${formatCurrency(receipt?.chancelleryAmount || 0)}" readonly>
+        </div>
+
+        <div class="form-group">
+          <label>Méthode de Paiement</label>
+          <select name="method" required>
+            <option value="">-- Sélectionner --</option>
+            <option value="Espèces" ${receipt?.method === 'Espèces' ? 'selected' : ''}>Espèces</option>
+            <option value="Chèque" ${receipt?.method === 'Chèque' ? 'selected' : ''}>Chèque</option>
+            <option value="Transfert" ${receipt?.method === 'Transfert' ? 'selected' : ''}>Transfert</option>
+          </select>
+        </div>
+
+        <div class="form-group checkbox">
+          <input type="checkbox" name="treasuryTransferred" ${receipt?.treasuryTransferred ? 'checked' : ''}>
+          <label>Transféré au Trésor</label>
+        </div>
+
+        <div class="form-group checkbox">
+          <input type="checkbox" name="chancelleryTransferred" ${receipt?.chancelleryTransferred ? 'checked' : ''}>
+          <label>Transféré à la Chancellerie</label>
+        </div>
+
+        <div class="modal-buttons">
+          <button type="button" onclick="document.getElementById('receipt-modal').remove()" class="secondary-btn">Annuler</button>
+          <button type="submit" class="primary-btn">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  updateReceiptRecordOptions();
+
+  modal.querySelector('#temp-receipt-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(modal.querySelector('#temp-receipt-form'));
+
+    const amount = Number(formData.get('amount')) || 0;
+    const treasuryPercent = appState.settings.judicialTreasuryPercentage;
+    const chancelleryPercent = 100 - treasuryPercent;
+
+    const receiptData = {
+      id: receipt?.id || null,
+      date: formData.get('date'),
+      recordType: formData.get('recordType'),
+      recordId: formData.get('recordId'),
+      collector: formData.get('collector'),
+      amount: amount,
+      treasuryPercent: treasuryPercent,
+      chancelleryPercent: chancelleryPercent,
+      treasuryAmount: (amount * treasuryPercent) / 100,
+      chancelleryAmount: (amount * chancelleryPercent) / 100,
+      method: formData.get('method'),
+      treasuryTransferred: formData.get('treasuryTransferred') ? true : false,
+      chancelleryTransferred: formData.get('chancelleryTransferred') ? true : false,
+      paymentStatus: 'Enregistré',
+      reference: receipt?.reference || `RCP-${new Date().getFullYear()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+      archived: receipt?.archived || false,
+      createdAt: receipt?.createdAt || new Date().toISOString(),
+    };
+
+    const success = await saveReceipt(receiptData);
+
+    if (success) {
+      showMessage(elements.receiptMessage, '✅ Reçu enregistré avec succès.', 'success');
       renderReceiptTable();
-      renderDashboard();
-    }
-    return;
-  }
-  if (action === 'archive-judicial') {
-    if (!confirm('Confirmez-vous l’archivage de ce dossier judiciaire ?')) return;
-    archiveRecord('Judiciaire', id);
-    renderJudicialList();
-    renderDashboard();
-  }
-  if (action === 'delete-judicial') {
-    const confirmed = await showDeletionConfirmation(
-      'Voulez-vous vraiment supprimer ce dossier judiciaire ? Cette action est irréversible.',
-      'Supprimer',
-      'Annuler'
-    );
-    if (!confirmed) return;
-    deleteJudicialRecord(id);
-    return;
-  }
-
-  if (action === 'delete-certification') {
-    const confirmed = await showDeletionConfirmation(
-      'Voulez-vous vraiment supprimer cette demande de certification ? Cette action est irréversible.',
-      'Supprimer',
-      'Annuler'
-    );
-    if (!confirmed) return;
-    deleteCertificationRecord(id);
-    return;
-  }
-  if (action === 'toggle-transfer-treasury' || action === 'toggle-transfer-chancellery') {
-    const receipt = appState.receipts.find((r) => r.id === id);
-    if (!receipt) return;
-    const isTreasury = action === 'toggle-transfer-treasury';
-    const checked = event.target.checked === true;
-    if (isTreasury) {
-      if (receipt.treasuryTransferred === checked) return;
-      receipt.treasuryTransferred = checked;
-      logAction(appState.currentUser.name, `Mise à jour transfert Trésor`, 'Recette', receipt.reference, `Transfert Trésor ${checked ? 'confirmé' : 'annulé'} pour ${formatMoney(receipt.treasuryAmount)}`);
+      modal.remove();
     } else {
-      if (receipt.chancelleryTransferred === checked) return;
-      receipt.chancelleryTransferred = checked;
-      logAction(appState.currentUser.name, `Mise à jour transfert Chancellerie`, 'Recette', receipt.reference, `Transfert Chancellerie ${checked ? 'confirmé' : 'annulé'} pour ${formatMoney(receipt.chancelleryAmount)}`);
+      showMessage(elements.receiptMessage, '❌ Erreur lors de l\'enregistrement.', 'error');
     }
-    saveState();
-    renderReceiptTable();
-    renderDashboard();
-    return;
-  }
-  if (action === 'restore-judicial') {
-    if (!confirm('Confirmez-vous la restauration de ce dossier judiciaire ?')) return;
-    restoreRecord('Judiciaire', id);
-    renderJudicialList();
-    renderDashboard();
-  }
-  if (action === 'edit-certification') {
-    showCertificationForm(id);
-  }
-  if (action === 'archive-certification') {
-    if (!confirm('Confirmez-vous l’archivage de cette demande de certification ?')) return;
-    archiveRecord('Certification', id);
-    renderCertificationList();
-    renderDashboard();
-  }
-  if (action === 'restore-certification') {
-    if (!confirm('Confirmez-vous la restauration de cette demande de certification ?')) return;
-    restoreRecord('Certification', id);
-    renderCertificationList();
-    renderDashboard();
-  }
-  if (action.startsWith('approve-user')) {
-    handleUserAction(id, 'Habilité', 'Validation d’une habilitation', `Compte approuvé`);
-  }
-  if (action.startsWith('reject-user')) {
-    handleUserAction(id, 'Refusé', 'Refus d’une habilitation', `Compte refusé`);
-  }
-  if (action.startsWith('suspend-user')) {
-    handleUserAction(id, 'Suspendu', 'Suspension d’un compte', `Compte suspendu`);
-  }
-  if (action.startsWith('reactivate-user')) {
-    handleUserAction(id, 'Habilité', 'Réactivation d’un compte', `Compte réactivé`);
-  }
-  if (action === 'delete-user') {
-    const confirmed = await showDeletionConfirmation(
-      'Voulez-vous vraiment supprimer cet utilisateur ? Cette action est irréversible.',
-      'Supprimer',
-      'Annuler'
-    );
-    if (!confirmed) return;
-    if (id === appState.currentUser.id) {
-      alert('Vous ne pouvez pas supprimer votre propre compte.');
-      return;
-    }
-    deleteUser(id);
-    return;
-  }
-}
-
-function handleUserAction(id, status, action, description) {
-  const user = appState.users.find((item) => item.id === id);
-  if (!user) return;
-  const confirmation = confirm(`Souhaitez-vous vraiment ${action.toLowerCase()} pour ${user.name} ?`);
-  if (!confirmation) return;
-  user.status = status;
-  if (status === 'Habilité') user.lastActivity = new Date().toISOString();
-  saveState();
-  logAction(appState.currentUser.name, action, 'Utilisateur', '', `${user.name} ${description}`);
-  renderUsersList();
-}
-
-function deleteUser(id) {
-  const index = appState.users.findIndex((u) => u.id === id);
-  if (index === -1) return;
-  const removed = appState.users.splice(index, 1)[0];
-  saveState();
-  logAction(appState.currentUser.name, 'Suppression d’un utilisateur', 'Utilisateur', '', `Utilisateur supprimé : ${removed.name}`);
-  renderUsersList();
-}
-
-function handleRoleChange(event) {
-  if (!event.target.classList.contains('role-select')) return;
-  const id = event.target.dataset.id;
-  const user = appState.users.find((u) => u.id === id);
-  if (!user) return;
-  user.role = event.target.value;
-  saveState();
-  logAction(appState.currentUser.name, 'Modification d’un rôle', 'Utilisateur', '', `${user.name} devient ${user.role}`);
-}
-
-function setSidebarHidden() {
-  if (!appState.currentUser) return;
-  ensureAuthVisibility();
-}
-
-function handleNavClick(event) {
-  const section = event.target.dataset.section;
-  if (!section) return;
-  setSection(section);
-  renderDashboard();
-  if (section === 'judicial') renderJudicialList();
-  if (section === 'certifications') renderCertificationList();
-  if (section === 'payments') renderReceiptTable();
-  if (section === 'users') renderUsersList();
-  if (section === 'journal') renderJournal();
-  if (section === 'settings') renderSettings();
-}
-
-function initAuth() {
-  elements.showRegister.addEventListener('click', showRegisterView);
-  elements.showLogin.addEventListener('click', showLoginView);
-  elements.loginForm.addEventListener('submit', handleLogin);
-  elements.registerForm.addEventListener('submit', handleRegister);
-  elements.logoutButton.addEventListener('click', () => {
-    appState.currentUser = null;
-    appState.isAuthenticated = false;
-    saveState();
-    showPublicScreen();
   });
 }
 
-function initNav() {
-  elements.navLinks.forEach((button) => button.addEventListener('click', handleNavClick));
+/**
+ * Édite un reçu
+ */
+function editReceiptForm(id) {
+  const receipt = appState.receipts.find(r => r.id === id);
+  if (receipt) {
+    showReceiptForm(receipt);
+  }
 }
 
-function initTableActions() {
-  document.addEventListener('click', handleTableAction);
-  document.addEventListener('change', handleRoleChange);
+/**
+ * Met à jour les options d'enregistrement dans le formulaire reçu
+ */
+function updateReceiptRecordOptions() {
+  const recordTypeSelect = document.querySelector('[name="recordType"]');
+  const recordIdSelect = document.querySelector('[name="recordId"]');
+
+  if (!recordTypeSelect || !recordIdSelect) return;
+
+  const recordType = recordTypeSelect.value;
+  recordIdSelect.innerHTML = '<option value="">-- Sélectionner --</option>';
+
+  if (recordType === 'judicial') {
+    appState.judicialRecords.forEach((record) => {
+      const option = document.createElement('option');
+      option.value = record.id;
+      option.textContent = `${record.reference} - ${record.parties}`;
+      recordIdSelect.appendChild(option);
+    });
+  } else if (recordType === 'certification') {
+    appState.certifications.forEach((cert) => {
+      const option = document.createElement('option');
+      option.value = cert.id;
+      option.textContent = `${cert.reference} - ${cert.name}`;
+      recordIdSelect.appendChild(option);
+    });
+  }
 }
 
+/**
+ * Met à jour la répartition des montants dans le formulaire reçu
+ */
+function updateReceiptDistribution() {
+  const amountInput = document.querySelector('[name="amount"]');
+  const treasuryPercentInput = document.querySelector('[name="treasuryPercent"]');
+  const treasuryAmountInput = document.querySelector('[name="treasuryAmount"]');
+  const chancelleryAmountInput = document.querySelector('[name="chancelleryAmount"]');
+
+  if (!amountInput || !treasuryPercentInput) return;
+
+  const amount = Number(amountInput.value) || 0;
+  const treasuryPercent = Number(treasuryPercentInput.value) || 70;
+  const chancelleryPercent = 100 - treasuryPercent;
+
+  const treasuryAmount = (amount * treasuryPercent) / 100;
+  const chancelleryAmount = (amount * chancelleryPercent) / 100;
+
+  if (treasuryAmountInput) treasuryAmountInput.value = formatCurrency(treasuryAmount);
+  if (chancelleryAmountInput) chancelleryAmountInput.value = formatCurrency(chancelleryAmount);
+}
+
+/**
+ * Confirme la suppression d'un reçu
+ */
+function deleteReceiptConfirm(id) {
+  if (confirm('Êtes-vous sûr de vouloir supprimer ce reçu ?')) {
+    deleteReceipt(id);
+    renderReceiptTable();
+    showMessage(elements.receiptMessage, '✅ Reçu supprimé.', 'success');
+  }
+}
+
+/**
+ * Archive un reçu
+ */
+async function archiveReceipt(id) {
+  const receipt = appState.receipts.find(r => r.id === id);
+  if (receipt) {
+    receipt.archived = true;
+    await saveReceipt(receipt);
+    renderReceiptTable();
+    showMessage(elements.receiptMessage, '✅ Reçu archivé.', 'success');
+  }
+}
+
+/**
+ * Restaure un reçu
+ */
+async function restoreReceipt(id) {
+  const receipt = appState.receipts.find(r => r.id === id);
+  if (receipt) {
+    receipt.archived = false;
+    await saveReceipt(receipt);
+    renderReceiptTable();
+    showMessage(elements.receiptMessage, '✅ Reçu restauré.', 'success');
+  }
+}
+
+/**
+ * Bascule le statut de transfert au Trésor
+ */
+async function toggleTreasuryTransfer(id) {
+  const receipt = appState.receipts.find(r => r.id === id);
+  if (receipt) {
+    receipt.treasuryTransferred = !receipt.treasuryTransferred;
+    await saveReceipt(receipt);
+    renderReceiptTable();
+    showMessage(elements.receiptMessage, receipt.treasuryTransferred ? '✅ Transfert au Trésor confirmé.' : '✅ Transfert au Trésor annulé.', 'success');
+  }
+}
+
+/**
+ * Bascule le statut de transfert à la Chancellerie
+ */
+async function toggleChancelleryTransfer(id) {
+  const receipt = appState.receipts.find(r => r.id === id);
+  if (receipt) {
+    receipt.chancelleryTransferred = !receipt.chancelleryTransferred;
+    await saveReceipt(receipt);
+    renderReceiptTable();
+    showMessage(elements.receiptMessage, receipt.chancelleryTransferred ? '✅ Transfert à la Chancellerie confirmé.' : '✅ Transfert à la Chancellerie annulé.', 'success');
+  }
+}
+
+// ============================================
+// UTILISATEURS
+// ============================================
+
+/**
+ * Confirme l'approbation d'un utilisateur
+ */
+function approveUserConfirm(userId) {
+  if (confirm('Approuver cet utilisateur ?')) {
+    approveUser(userId);
+    renderUsersTable();
+    showMessage(elements.usersTableBody?.parentElement?.querySelector('.form-success') || document.createElement('div'), '✅ Utilisateur approuvé.', 'success');
+  }
+}
+
+/**
+ * Confirme la suppression d'un utilisateur
+ */
+function deleteUserConfirm(userId) {
+  if (confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) {
+    deleteUser(userId);
+    renderUsersTable();
+  }
+}
+
+// ============================================
+// FILTRES & RECHERCHE
+// ============================================
+
+/**
+ * Initialise les filtres
+ */
 function initFilters() {
-  elements.judicialSearch.addEventListener('input', renderJudicialList);
-  elements.judicialStatusFilter.addEventListener('change', renderJudicialList);
-  elements.judicialFineStatusFilter.addEventListener('change', renderJudicialList);
-  elements.judicialShowArchived.addEventListener('change', renderJudicialList);
-  elements.certificationSearch.addEventListener('input', renderCertificationList);
-  elements.certificationStatusFilter.addEventListener('change', renderCertificationList);
-  elements.certificationShowArchived.addEventListener('change', renderCertificationList);
+  // Filtres Judiciaires
+  if (elements.judicialFilter) {
+    elements.judicialFilter.addEventListener('input', filterJudicial);
+  }
+  if (elements.judicialStatusFilter) {
+    elements.judicialStatusFilter.addEventListener('change', filterJudicial);
+  }
+  if (elements.judicialDateFrom) {
+    elements.judicialDateFrom.addEventListener('change', filterJudicial);
+  }
+  if (elements.judicialDateTo) {
+    elements.judicialDateTo.addEventListener('change', filterJudicial);
+  }
+  if (elements.resetJudicialFilters) {
+    elements.resetJudicialFilters.addEventListener('click', resetDataFilters);
+  }
+
+  // Filtres Certifications
+  if (elements.certificationFilter) {
+    elements.certificationFilter.addEventListener('input', filterCertification);
+  }
+  if (elements.certificationStatusFilter) {
+    elements.certificationStatusFilter.addEventListener('change', filterCertification);
+  }
+  if (elements.certificationDateFrom) {
+    elements.certificationDateFrom.addEventListener('change', filterCertification);
+  }
+  if (elements.certificationDateTo) {
+    elements.certificationDateTo.addEventListener('change', filterCertification);
+  }
+  if (elements.resetCertificationFilters) {
+    elements.resetCertificationFilters.addEventListener('click', resetDataFilters);
+  }
+
+  // Filtres Reçus
+  if (elements.receiptFilter) {
+    elements.receiptFilter.addEventListener('input', filterReceipt);
+  }
+  if (elements.receiptStatusFilter) {
+    elements.receiptStatusFilter.addEventListener('change', filterReceipt);
+  }
+  if (elements.receiptDateFrom) {
+    elements.receiptDateFrom.addEventListener('change', filterReceipt);
+  }
+  if (elements.receiptDateTo) {
+    elements.receiptDateTo.addEventListener('change', filterReceipt);
+  }
+  if (elements.resetReceiptFilters) {
+    elements.resetReceiptFilters.addEventListener('click', resetDataFilters);
+  }
+
+  // Filtres Journal
+  if (elements.journalFilter) {
+    elements.journalFilter.addEventListener('input', filterJournal);
+  }
+  if (elements.journalDateFrom) {
+    elements.journalDateFrom.addEventListener('change', filterJournal);
+  }
+  if (elements.journalDateTo) {
+    elements.journalDateTo.addEventListener('change', filterJournal);
+  }
+  if (elements.resetJournalFilters) {
+    elements.resetJournalFilters.addEventListener('click', resetDataFilters);
+  }
 }
 
-function resetDataFilters() {
-  elements.judicialSearch.value = '';
-  elements.judicialStatusFilter.value = 'all';
-  elements.judicialFineStatusFilter.value = 'all';
-  elements.judicialShowArchived.checked = false;
-  elements.certificationSearch.value = '';
-  elements.certificationStatusFilter.value = 'all';
-  elements.certificationShowArchived.checked = false;
-}
+/**
+ * Filtre les enregistrements judiciaires
+ */
+function filterJudicial() {
+  const searchTerm = elements.judicialFilter?.value.toLowerCase() || '';
+  const statusFilter = elements.judicialStatusFilter?.value || '';
+  const dateFrom = elements.judicialDateFrom?.value || '';
+  const dateTo = elements.judicialDateTo?.value || '';
 
-function initForms() {
-  elements.addReceiptButton.addEventListener('click', showReceiptModal);
-  elements.refreshJudicialButton?.addEventListener('click', () => refreshSection('judicial'));
-  elements.refreshCertificationButton?.addEventListener('click', () => refreshSection('certifications'));
-  elements.refreshPaymentsButton?.addEventListener('click', () => refreshSection('payments'));
-  elements.refreshUsersButton?.addEventListener('click', () => refreshSection('users'));
-  elements.refreshJournalButton?.addEventListener('click', () => refreshSection('journal'));
-  elements.newJudicialButton.addEventListener('click', () => showJudicialForm());
-  elements.newCertificationButton.addEventListener('click', () => showCertificationForm());
-  elements.refreshDashboardButton?.addEventListener('click', () => refreshSection('dashboard'));
-  const updateJudicialDisplay = () => {
-    const value = Number(elements.settingJudicialTreasury.value);
-    elements.settingJudicialDisplay.textContent = `${value}% / ${100 - value}%`;
-  };
-  const updateCertificationDisplay = () => {
-    const value = Number(elements.settingCertificationTreasury.value);
-    elements.settingCertificationDisplay.textContent = `${value}% / ${100 - value}%`;
-  };
-  elements.settingJudicialTreasury.addEventListener('input', updateJudicialDisplay);
-  elements.settingCertificationTreasury.addEventListener('input', updateCertificationDisplay);
-  updateJudicialDisplay();
-  updateCertificationDisplay();
-  elements.settingsForm.addEventListener('submit', (event) => {
-    event.preventDefault();
-    const permission = getPermission(appState.currentUser.role);
-    if (!permission.canChangeSettings) return;
-    const judicial = Number(elements.settingJudicialTreasury.value);
-    const certification = Number(elements.settingCertificationTreasury.value);
-    appState.settings.judicialTreasuryPercentage = judicial;
-    appState.settings.certificationTreasuryPercentage = certification;
-    appState.settings.referenceYear = elements.settingYear.value;
-    appState.settings.institution = elements.settingInstitution.value;
-    appState.settings.currency = elements.settingCurrency.value;
-    saveState();
-    logAction(appState.currentUser.name, 'Modification du paramétrage', 'Paramétrage', '', `Répartition judiciaire ${judicial}% Trésor / ${100 - judicial}% Chancellerie ; certification ${certification}% Trésor / ${100 - certification}% Chancellerie.`);
-    renderSettings();
+  const filtered = appState.judicialRecords.filter((record) => {
+    const matchesSearch = !searchTerm || record.reference?.toLowerCase().includes(searchTerm) || record.parties?.toLowerCase().includes(searchTerm);
+    const matchesStatus = !statusFilter || record.status === statusFilter;
+    const matchesDateFrom = !dateFrom || new Date(record.date) >= new Date(dateFrom);
+    const matchesDateTo = !dateTo || new Date(record.date) <= new Date(dateTo);
+
+    return matchesSearch && matchesStatus && matchesDateFrom && matchesDateTo;
   });
+
+  renderJudicialTable(filtered);
 }
 
-function getNextJudicialReference() {
-  appState.counters.judicial += 1;
-  saveState();
-  return `CH-${new Date().getFullYear()}-T-${String(appState.counters.judicial).padStart(4, '0')}`;
+/**
+ * Filtre les certifications
+ */
+function filterCertification() {
+  const searchTerm = elements.certificationFilter?.value.toLowerCase() || '';
+  const statusFilter = elements.certificationStatusFilter?.value || '';
+  const dateFrom = elements.certificationDateFrom?.value || '';
+  const dateTo = elements.certificationDateTo?.value || '';
+
+  const filtered = appState.certifications.filter((cert) => {
+    const matchesSearch = !searchTerm || cert.reference?.toLowerCase().includes(searchTerm) || cert.name?.toLowerCase().includes(searchTerm);
+    const matchesStatus = !statusFilter || cert.status === statusFilter;
+    const matchesDateFrom = !dateFrom || new Date(cert.date) >= new Date(dateFrom);
+    const matchesDateTo = !dateTo || new Date(cert.date) <= new Date(dateTo);
+
+    return matchesSearch && matchesStatus && matchesDateFrom && matchesDateTo;
+  });
+
+  renderCertificationTable(filtered);
 }
 
-function getNextCertificationReference() {
-  appState.counters.certification += 1;
-  saveState();
-  return `C-${new Date().getFullYear()}-${String(appState.counters.certification).padStart(4, '0')}`;
+/**
+ * Filtre les reçus
+ */
+function filterReceipt() {
+  const searchTerm = elements.receiptFilter?.value.toLowerCase() || '';
+  const statusFilter = elements.receiptStatusFilter?.value || '';
+  const dateFrom = elements.receiptDateFrom?.value || '';
+  const dateTo = elements.receiptDateTo?.value || '';
+
+  const filtered = appState.receipts.filter((receipt) => {
+    const matchesSearch = !searchTerm || receipt.reference?.toLowerCase().includes(searchTerm) || receipt.collector?.toLowerCase().includes(searchTerm);
+    const matchesStatus = !statusFilter || receipt.paymentStatus === statusFilter;
+    const matchesDateFrom = !dateFrom || new Date(receipt.date) >= new Date(dateFrom);
+    const matchesDateTo = !dateTo || new Date(receipt.date) <= new Date(dateTo);
+
+    return matchesSearch && matchesStatus && matchesDateFrom && matchesDateTo;
+  });
+
+  renderReceiptTable(filtered);
 }
 
-function showJudicialForm(id) {
-  const permission = getPermission(appState.currentUser.role);
-  if (!permission.canEditJudicial) return;
-  const record = appState.judicialRecords.find((item) => item.id === id);
-  const modal = document.createElement('div');
-  modal.className = 'modal-backdrop';
-  modal.innerHTML = `
-    <div class="modal-card">
-      <h3>${record ? 'Modifier un dossier judiciaire' : 'Nouveau dossier judiciaire'}</h3>
-      <form id="judicial-form">
-        <label>Nom du prévenu<label class="input-label"><input type="text" name="suspect" value="${record ? record.suspect : ''}" required /></label></label>
-        <label>Magistrat responsable<label class="input-label"><input type="text" name="magistrate" value="${record ? record.magistrate : ''}" required /></label></label>
-        <label>Date du jugement<label class="input-label"><input type="date" name="judgmentDate" value="${record ? record.judgmentDate : new Date().toISOString().slice(0, 10)}" required /></label></label>
-        <label>Qualification juridique<label class="input-label"><input type="text" name="qualification" value="${record ? record.qualification : ''}" required /></label></label>
-        <label>Montant de l’amende<label class="input-label"><input type="number" name="fineAmount" min="0" value="${record ? record.fineAmount : 0}" required /></label></label>
-        <label>Peine en nature<label class="input-label"><input type="text" name="sentence" value="${record ? record.sentence : ''}" /></label></label>
-        <label>Statut de la peine en nature<label class="input-label">
-          <select name="sentenceStatus" required>
-            ${['Aucune','Non commencée','En cours d’exécution','Exécutée','Suspendue','Annulée'].map((status) => `<option value="${status}" ${record && record.sentenceStatus === status ? 'selected' : ''}>${status}</option>`).join('')}
-          </select>
-        </label></label>
-        <label>Lien vers la motivation du jugement — Discord<label class="input-label"><input type="url" name="judgmentLink" value="${record ? record.judgmentLink : ''}" /></label></label>
-        <label>Statut de l’amende<label class="input-label">
-          <select name="fineStatus" required>
-            ${['Non réglée','Partiellement réglée','Réglée','Annulée'].map((status) => `<option value="${status}" ${record && record.fineStatus === status ? 'selected' : ''}>${status}</option>`).join('')}
-          </select>
-        </label></label>
-        <label>Observations<label class="input-label"><textarea name="notes">${record ? record.notes : ''}</textarea></label></label>
-        <div class="form-actions">
-          <button type="submit" class="primary-btn">${record ? 'Enregistrer les modifications' : 'Inscrire au registre'}</button>
-          <button type="button" class="secondary-btn" id="close-judicial-modal">Annuler</button>
-        </div>
-      </form>
+/**
+ * Filtre le journal
+ */
+function filterJournal() {
+  const searchTerm = elements.journalFilter?.value.toLowerCase() || '';
+  const dateFrom = elements.journalDateFrom?.value || '';
+  const dateTo = elements.journalDateTo?.value || '';
+
+  const filtered = appState.journal.filter((entry) => {
+    const matchesSearch = !searchTerm || entry.description?.toLowerCase().includes(searchTerm) || entry.userName?.toLowerCase().includes(searchTerm);
+    const matchesDateFrom = !dateFrom || new Date(entry.timestamp) >= new Date(dateFrom);
+    const matchesDateTo = !dateTo || new Date(entry.timestamp) <= new Date(dateTo);
+
+    return matchesSearch && matchesDateFrom && matchesDateTo;
+  });
+
+  renderJournalTable(filtered);
+}
+
+/**
+ * Réinitialise les filtres
+ */
+function resetDataFilters(e) {
+  const section = e.target.closest('[id$="-section"]')?.id || '';
+
+  if (section.includes('judicial')) {
+    if (elements.judicialFilter) elements.judicialFilter.value = '';
+    if (elements.judicialStatusFilter) elements.judicialStatusFilter.value = '';
+    if (elements.judicialDateFrom) elements.judicialDateFrom.value = '';
+    if (elements.judicialDateTo) elements.judicialDateTo.value = '';
+    filterJudicial();
+  } else if (section.includes('certification')) {
+    if (elements.certificationFilter) elements.certificationFilter.value = '';
+    if (elements.certificationStatusFilter) elements.certificationStatusFilter.value = '';
+    if (elements.certificationDateFrom) elements.certificationDateFrom.value = '';
+    if (elements.certificationDateTo) elements.certificationDateTo.value = '';
+    filterCertification();
+  } else if (section.includes('payments')) {
+    if (elements.receiptFilter) elements.receiptFilter.value = '';
+    if (elements.receiptStatusFilter) elements.receiptStatusFilter.value = '';
+    if (elements.receiptDateFrom) elements.receiptDateFrom.value = '';
+    if (elements.receiptDateTo) elements.receiptDateTo.value = '';
+    filterReceipt();
+  } else if (section.includes('journal')) {
+    if (elements.journalFilter) elements.journalFilter.value = '';
+    if (elements.journalDateFrom) elements.journalDateFrom.value = '';
+    if (elements.journalDateTo) elements.journalDateTo.value = '';
+    filterJournal();
+  }
+}
+
+// ============================================
+// GESTION DES SECTIONS
+// ============================================
+
+/**
+ * Change la section active
+ */
+function setSection(sectionName) {
+  appState.activeSection = sectionName;
+
+  // Masquer toutes les sections
+  document.querySelectorAll('[id$="-section"]').forEach((section) => {
+    section.style.display = 'none';
+  });
+
+  // Désactiver les boutons de navigation
+  elements.navSections.forEach((btn) => {
+    btn.classList.remove('active');
+  });
+
+  // Afficher la section active
+  let activeElement = null;
+  switch (sectionName) {
+    case 'dashboard':
+      activeElement = elements.dashboardSection;
+      renderDashboard();
+      break;
+    case 'judicial':
+      activeElement = elements.judicialSection;
+      renderJudicialTable();
+      break;
+    case 'certification':
+      activeElement = elements.certificationSection;
+      renderCertificationTable();
+      break;
+    case 'payments':
+      activeElement = elements.paymentsSection;
+      renderReceiptTable();
+      break;
+    case 'users':
+      if (isAdmin()) {
+        activeElement = elements.usersSection;
+        renderUsersTable();
+      }
+      break;
+    case 'journal':
+      activeElement = elements.journalSection;
+      renderJournalTable();
+      break;
+    case 'settings':
+      if (isAdmin()) {
+        activeElement = elements.settingsSection;
+        renderSettings();
+      }
+      break;
+  }
+
+  if (activeElement) {
+    activeElement.style.display = 'block';
+  }
+
+  // Activer le bouton de navigation correspondant
+  document.querySelector(`[data-section="${sectionName}"]`)?.classList.add('active');
+}
+
+// ============================================
+// SETTINGS
+// ============================================
+
+/**
+ * Rend et initialise la section settings
+ */
+function renderSettings() {
+  if (!elements.settingsForm) return;
+
+  elements.settingsForm.innerHTML = `
+    <div class="settings-container">
+      <h2>⚙️ Paramètres de la Chancellerie</h2>
+
+      <div class="form-group">
+        <label>Nom de l'Institution</label>
+        <input type="text" id="settings-institution" value="${appState.settings.institution || 'Chancellerie Impériale'}" placeholder="Nom de l'institution">
+      </div>
+
+      <div class="form-group">
+        <label>Pourcentage Trésor (%)</label>
+        <input type="number" id="settings-treasury-percent" value="${appState.settings.judicialTreasuryPercentage || 70}" min="0" max="100" step="1">
+      </div>
+
+      <div class="form-group">
+        <label>Prix par Défaut des Certifications (Or)</label>
+        <input type="number" id="settings-cert-price" value="${appState.settings.certificationPrice || 50}" step="0.01">
+      </div>
+
+      <div class="form-buttons">
+        <button type="button" onclick="saveSettingsForm()" class="primary-btn">Enregistrer</button>
+      </div>
     </div>
   `;
-  document.body.appendChild(modal);
-  const form = modal.querySelector('#judicial-form');
-  const fineInput = form.querySelector('[name="fineAmount"]');
-  form.addEventListener('submit', (event) => {
-    event.preventDefault();
-    const data = new FormData(form);
-    const payload = {
-      suspect: data.get('suspect').trim(),
-      magistrate: data.get('magistrate').trim(),
-      judgmentDate: data.get('judgmentDate'),
-      qualification: data.get('qualification').trim(),
-      fineAmount: Number(data.get('fineAmount')),
-      sentence: data.get('sentence').trim(),
-      sentenceStatus: data.get('sentenceStatus'),
-      judgmentReference: record ? record.judgmentReference : '',
-      judgmentLink: data.get('judgmentLink').trim(),
-      fineStatus: data.get('fineStatus'),
-      notes: data.get('notes').trim(),
-    };
-    if (!payload.suspect || !payload.magistrate || !payload.qualification) {
-      alert('Veuillez remplir tous les champs obligatoires.');
-      return;
-    }
-    if (record) {
-      updateRecord('Judiciaire', record.id, payload);
-    } else {
-      const newRecord = {
-        id: crypto.randomUUID(),
-        reference: getNextJudicialReference(),
-        ...payload,
-        archived: false,
-        createdAt: new Date().toISOString(),
-        type: 'Judiciaire',
-      };
-      addJudicialRecord(newRecord);
-    }
-    modal.remove();
-    renderJudicialList();
-    renderDashboard();
-    renderReceiptOptions();
-  });
-  modal.querySelector('#close-judicial-modal').addEventListener('click', () => modal.remove());
 }
 
-function showCertificationForm(id) {
-  const permission = getPermission(appState.currentUser.role);
-  if (!permission.canEditCertification && !(!id && permission.canCreateCertification)) return;
-  const record = appState.certifications.find((item) => item.id === id);
-  const modal = document.createElement('div');
-  modal.className = 'modal-backdrop';
-  modal.innerHTML = `
-    <div class="modal-card">
-      <h3>${record ? 'Modifier une demande de certification' : 'Nouvelle demande de certification'}</h3>
-      <form id="certification-form">
-        <label>Nom du candidat<label class="input-label"><input type="text" name="candidateName" value="${record ? record.candidateName : ''}" required /></label></label>
-        <label>Professeur<label class="input-label"><input type="text" name="instructor" value="${record ? record.instructor : ''}" required /></label></label>
-        <label>Date de formation<label class="input-label"><input type="date" name="trainingDate" value="${record ? record.trainingDate : new Date().toISOString().slice(0, 10)}" required /></label></label>
-        <label>Type de formation<label class="input-label">
-          <select name="trainingType" required>
-            ${['Avocati','Magistrat','Garde'].map((type) => `<option value="${type}" ${record && record.trainingType === type ? 'selected' : ''}>${type}</option>`).join('')}
-          </select>
-        </label></label>
-        <label>Montant de la certification<label class="input-label"><input type="number" name="amount" min="0" value="${record ? record.amount : 0}" required /></label></label>
-        <label>Statut du paiement<label class="input-label">
-          <select name="paymentStatus" required>
-            ${['Non réglée','Partiellement réglée','Réglée','Annulée'].map((status) => `<option value="${status}" ${record && record.paymentStatus === status ? 'selected' : ''}>${status}</option>`).join('')}
-          </select>
-        </label></label>
-        <label>Observations<label class="input-label"><textarea name="notes">${record ? record.notes : ''}</textarea></label></label>
-        <div class="form-actions">
-          <button type="submit" class="primary-btn">${record ? 'Enregistrer les modifications' : 'Inscrire la certification au registre'}</button>
-          <button type="button" class="secondary-btn" id="close-certification-modal">Annuler</button>
-        </div>
-      </form>
-    </div>
-  `;
-  document.body.appendChild(modal);
-  const form = modal.querySelector('#certification-form');
-  form.addEventListener('submit', (event) => {
-    event.preventDefault();
-    const data = new FormData(form);
-    const payload = {
-      candidateName: data.get('candidateName').trim(),
-      instructor: data.get('instructor').trim(),
-      trainingDate: data.get('trainingDate'),
-      trainingType: data.get('trainingType'),
-      amount: Number(data.get('amount')),
-      paymentStatus: data.get('paymentStatus'),
-      notes: data.get('notes').trim(),
-    };
-    if (!payload.candidateName || !payload.instructor || !payload.trainingType) {
-      alert('Veuillez remplir tous les champs obligatoires.');
-      return;
-    }
-    if (record) {
-      updateRecord('Certification', record.id, payload);
-    } else {
-      const newRecord = {
-        id: crypto.randomUUID(),
-        reference: getNextCertificationReference(),
-        ...payload,
-        archived: false,
-        createdAt: new Date().toISOString(),
-        type: 'Certification',
-      };
-      addCertification(newRecord);
-    }
-    modal.remove();
-    renderCertificationList();
-    renderDashboard();
-    renderReceiptOptions();
-  });
-  modal.querySelector('#close-certification-modal').addEventListener('click', () => modal.remove());
-}
+/**
+ * Sauvegarde les paramètres
+ */
+async function saveSettingsForm() {
+  const institution = document.getElementById('settings-institution')?.value || '';
+  const treasuryPercent = Number(document.getElementById('settings-treasury-percent')?.value) || 70;
+  const certPrice = Number(document.getElementById('settings-cert-price')?.value) || 50;
 
-function mountApp() {
-  // NOTE: state is already loaded by the caller (see DOMContentLoaded below)
-  // before mountApp() runs — calling loadState() again here created a race
-  // condition where a second, unawaited Supabase read could silently
-  // overwrite in-memory state after the UI had already rendered.
-  initAuth();
-  initNav();
-  initTableActions();
-  initFilters();
-  initForms();
-  if (appState.isAuthenticated && appState.currentUser) {
-    const activeUser = appState.users.find((user) => user.id === appState.currentUser.id);
-    appState.currentUser = activeUser || appState.currentUser;
-    showAppScreen();
-    resetDataFilters();
-    ensureAuthVisibility();
-    renderDashboard();
-    renderJudicialList();
-    renderCertificationList();
-    renderReceiptOptions();
-    renderReceiptTable();
-    renderUsersList();
-    renderJournal();
-    renderSettings();
+  const settings = {
+    institution,
+    judicialTreasuryPercentage: treasuryPercent,
+    certificationPrice: certPrice,
+  };
+
+  const success = await saveSettings(settings);
+
+  if (success) {
+    showMessage(elements.settingsMessage || document.createElement('div'), '✅ Paramètres enregistrés avec succès.', 'success');
   } else {
-    appState.currentUser = null;
-    appState.isAuthenticated = false;
-    showPublicScreen();
+    showMessage(elements.settingsMessage || document.createElement('div'), '❌ Erreur lors de l\'enregistrement.', 'error');
   }
 }
 
-window.addEventListener('DOMContentLoaded', async () => {
-  try {
-    // Charge d'abord les données sauvegardées
-    await loadState();
+// ============================================
+// INITIALISATION
+// ============================================
 
-    // Puis initialise l'application
-    await mountApp();
-  } catch (error) {
-    console.error('Erreur lors du démarrage de l’application :', error);
+/**
+ * Initialise la navigation
+ */
+function initNav() {
+  elements.navSections.forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const section = btn.getAttribute('data-section');
+      setSection(section);
+    });
+  });
+
+  if (elements.logoutButton) {
+    elements.logoutButton.addEventListener('click', logoutUser);
   }
+}
+
+/**
+ * Initialise les formulaires
+ */
+function initForms() {
+  // Judicial Form
+  if (elements.judicialForm) {
+    elements.judicialForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      showJudicialForm();
+    });
+  }
+
+  // Certification Form
+  if (elements.certificationForm) {
+    elements.certificationForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      showCertificationForm();
+    });
+  }
+
+  // Receipt Form
+  if (elements.receiptForm) {
+    elements.receiptForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      showReceiptForm();
+    });
+  }
+
+  // Login
+  if (elements.loginButton) {
+    elements.loginButton.addEventListener('click', loginUser);
+    elements.loginEmail.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') loginUser();
+    });
+    elements.loginPassword.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') loginUser();
+    });
+  }
+
+  // Register
+  if (elements.registerButton) {
+    elements.registerButton.addEventListener('click', registerUser);
+    elements.registerEmail.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') registerUser();
+    });
+    elements.registerPassword.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') registerUser();
+    });
+  }
+}
+
+// ============================================
+// DÉMARRAGE
+// ============================================
+
+document.addEventListener('DOMContentLoaded', async () => {
+  // Vérifier l'authentification existante
+  const { data } = await supabaseClient.auth.getSession();
+
+  if (data.session) {
+    const user = data.session.user;
+    appState.currentUser = {
+      id: user.id,
+      email: user.email,
+      name: user.user_metadata?.name || user.email,
+      role: user.user_metadata?.role || 'greffier',
+      approved: user.user_metadata?.approved || false,
+    };
+
+    appState.isAuthenticated = true;
+    await loadAppData();
+    showAppScreen();
+  } else {
+    showAuthScreen();
+  }
+
+  initForms();
+  initFilters();
 });
 
-async function testSupabase() {
-  const { data, error } = await supabaseClient
-    .from('app_settings')
-    .select('*')
-    .limit(1);
-
-  if (error) {
-    console.error('Erreur Supabase :', error);
-  } else {
-    console.log('Connexion Supabase réussie :', data);
-  }
-}
-
-testSupabase();
+// ============================================
+// FIN BLOC 2
+// ============================================
