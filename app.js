@@ -239,7 +239,7 @@ async function loginUser() {
       role: user.user_metadata?.role || 'greffier',
       approved: user.user_metadata?.approved || false,
     };
-
+    
     appState.isAuthenticated = true;
     await loadAppData();
     showAppScreen();
@@ -297,12 +297,18 @@ function showAppScreen() {
  * Charge toutes les données de l'application
  */
 async function loadAppData() {
+  // ✅ Vérifier que l'utilisateur est bien défini
+  if (!appState.currentUser || !appState.currentUser.id) {
+    console.error('Utilisateur non défini');
+    return;
+  }
+
   try {
+    // ... le reste de ton code ...
     // Charger les enregistrements judiciaires
     const { data: judicial, error: judicialError } = await supabaseClient
   .from('judicial_records')
   .select('*')
-  .eq('createdBy', appState.currentUser.id)  // ← Ajoute cette ligne
   .order('createdAt', { ascending: false });
 
     if (judicialError) throw judicialError;
@@ -312,7 +318,6 @@ async function loadAppData() {
     const { data: certifications, error: certificationsError } = await supabaseClient
   .from('certifications')
   .select('*')
-  .eq('createdBy', appState.currentUser.id)
   .order('createdAt', { ascending: false });
 
     if (certError) throw certError;
@@ -322,7 +327,6 @@ async function loadAppData() {
     const { data: receipts, error: receiptsError } = await supabaseClient
   .from('receipts')
   .select('*')
-  .eq('createdBy', appState.currentUser.id)
   .order('createdAt', { ascending: false });
 
     if (receiptError) throw receiptError;
