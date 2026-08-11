@@ -291,6 +291,7 @@ function showAppScreen() {
 // ============================================
 
 /**
+/**
  * Charge toutes les données de l'application
  */
 async function loadAppData() {
@@ -301,34 +302,30 @@ async function loadAppData() {
 
   console.log('📊 Loading data for user:', appState.currentUser.name, 'ID:', appState.currentUser.id);
 
-  // ... rest of function
-}
-
   try {
-    // ... le reste de ton code ...
     // Charger les enregistrements judiciaires
     const { data: judicial, error: judicialError } = await supabaseClient
-  .from('judicial_records')
-  .select('*')
-  .order('createdAt', { ascending: false });
+      .from('judicial_records')
+      .select('*')
+      .order('createdAt', { ascending: false });
 
     if (judicialError) throw judicialError;
     appState.judicialRecords = judicial || [];
 
     // Charger les certifications
     const { data: certifications, error: certificationsError } = await supabaseClient
-  .from('certifications')
-  .select('*')
-  .order('createdAt', { ascending: false });
+      .from('certifications')
+      .select('*')
+      .order('createdAt', { ascending: false });
 
     if (certificationsError) throw certificationsError;
     appState.certifications = certifications || [];
 
     // Charger les reçus
     const { data: receipts, error: receiptsError } = await supabaseClient
-  .from('receipts')
-  .select('*')
-  .order('createdAt', { ascending: false });
+      .from('receipts')
+      .select('*')
+      .order('createdAt', { ascending: false });
 
     if (receiptsError) throw receiptsError;
     appState.receipts = receipts || [];
@@ -346,9 +343,9 @@ async function loadAppData() {
 
     // Charger le journal
     const { data: journal, error: journalError } = await supabaseClient
-  .from('audit_journal')
-  .select('*')
-  .order('timestamp', { ascending: false });
+      .from('audit_journal')
+      .select('*')
+      .order('timestamp', { ascending: false });
 
     if (journalError) throw journalError;
     appState.journal = journal || [];
@@ -373,9 +370,9 @@ async function loadAppData() {
     appState.counters.judicial = appState.judicialRecords.length;
     appState.counters.certification = appState.certifications.length;
 
-    console.log('Données chargées avec succès');
+    console.log('✅ Données chargées avec succès');
   } catch (err) {
-    console.error('Erreur lors du chargement des données:', err);
+    console.error('❌ Erreur lors du chargement des données:', err);
   }
 }
 
