@@ -309,19 +309,21 @@ async function loadAppData() {
     appState.judicialRecords = judicial || [];
 
     // Charger les certifications
-    const { data: certifications, error: certError } = await supabaseClient
-      .from('certifications')
-      .select('*')
-      .order('createdAt', { ascending: false });
+    const { data: certifications, error: certificationsError } = await supabaseClient
+  .from('certifications')
+  .select('*')
+  .eq('createdBy', appState.currentUser.id)
+  .order('createdAt', { ascending: false });
 
     if (certError) throw certError;
     appState.certifications = certifications || [];
 
     // Charger les reçus
-    const { data: receipts, error: receiptError } = await supabaseClient
-      .from('receipts')
-      .select('*')
-      .order('createdAt', { ascending: false });
+    const { data: receipts, error: receiptsError } = await supabaseClient
+  .from('receipts')
+  .select('*')
+  .eq('createdBy', appState.currentUser.id)
+  .order('createdAt', { ascending: false });
 
     if (receiptError) throw receiptError;
     appState.receipts = receipts || [];
@@ -339,9 +341,9 @@ async function loadAppData() {
 
     // Charger le journal
     const { data: journal, error: journalError } = await supabaseClient
-      .from('audit_journal')
-      .select('*')
-      .order('createdAt', { ascending: false });
+  .from('audit_journal')
+  .select('*')
+  .order('timestamp', { ascending: false });
 
     if (journalError) throw journalError;
     appState.journal = journal || [];
