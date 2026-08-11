@@ -307,7 +307,6 @@ async function loadAppData() {
     const { data: judicial, error: judicialError } = await supabaseClient
       .from('judicial_records')
       .select('*')
-      .order('createdAt', { ascending: false });
 
     if (judicialError) throw judicialError;
     appState.judicialRecords = judicial || [];
@@ -316,7 +315,6 @@ async function loadAppData() {
     const { data: certifications, error: certificationsError } = await supabaseClient
       .from('certifications')
       .select('*')
-      .order('createdAt', { ascending: false });
 
     if (certificationsError) throw certificationsError;
     appState.certifications = certifications || [];
@@ -325,7 +323,6 @@ async function loadAppData() {
     const { data: receipts, error: receiptsError } = await supabaseClient
       .from('receipts')
       .select('*')
-      .order('createdAt', { ascending: false });
 
     if (receiptsError) throw receiptsError;
     appState.receipts = receipts || [];
@@ -335,7 +332,6 @@ async function loadAppData() {
       const { data: users, error: usersError } = await supabaseClient
         .from('users')
         .select('*')
-        .order('createdAt', { ascending: false });
 
       if (usersError) throw usersError;
       appState.users = users || [];
@@ -345,7 +341,6 @@ async function loadAppData() {
     const { data: journal, error: journalError } = await supabaseClient
       .from('audit_journal')
       .select('*')
-      .order('timestamp', { ascending: false });
 
     if (journalError) throw journalError;
     appState.journal = journal || [];
