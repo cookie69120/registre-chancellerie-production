@@ -32,8 +32,65 @@ const appState = {
   isAuthenticated: false,
 };
 
-// ... reste des éléments DOM inchangé ...
+// ============================================
+// RÉFÉRENCES AUX ÉLÉMENTS DU DOM
+// ============================================
+const elements = {
+  // Authentification
+  registerEmail: document.getElementById('register-email'),
+  registerPassword: document.getElementById('register-password'),
+  registerName: document.getElementById('register-name'),
+  registerRole: document.getElementById('register-role'),
+  registerButton: document.getElementById('register-btn'),
+  registerMessage: document.getElementById('register-message'),
 
+  // Formulaires
+  judicialForm: document.getElementById('judicial-form'),
+  certificationForm: document.getElementById('certification-form'),
+  receiptForm: document.getElementById('receipt-form'),
+  settingsForm: document.getElementById('settings-form'),
+
+  // Tableaux
+  judicialTableBody: document.getElementById('judicial-table-body'),
+  certificationTableBody: document.getElementById('certification-table-body'),
+  receiptTableBody: document.getElementById('receipt-table-body'),
+  journalTableBody: document.getElementById('journal-table-body'),
+
+  // Filtres Judiciaires
+  judicialFilter: document.getElementById('judicial-filter'),
+  judicialStatusFilter: document.getElementById('judicial-status-filter'),
+  judicialDateFrom: document.getElementById('judicial-date-from'),
+  judicialDateTo: document.getElementById('judicial-date-to'),
+  resetJudicialFilters: document.getElementById('reset-judicial-filters'),
+  judicialMessage: document.getElementById('judicial-message'),
+
+  // Filtres Certifications
+  certificationFilter: document.getElementById('certification-filter'),
+  certificationStatusFilter: document.getElementById('certification-status-filter'),
+  certificationDateFrom: document.getElementById('certification-date-from'),
+  certificationDateTo: document.getElementById('certification-date-to'),
+  resetCertificationFilters: document.getElementById('reset-certification-filters'),
+  certificationMessage: document.getElementById('certification-message'),
+
+  // Filtres Reçus
+  receiptFilter: document.getElementById('receipt-filter'),
+  receiptStatusFilter: document.getElementById('receipt-status-filter'),
+  receiptDateFrom: document.getElementById('receipt-date-from'),
+  receiptDateTo: document.getElementById('receipt-date-to'),
+  resetReceiptFilters: document.getElementById('reset-receipt-filters'),
+  receiptMessage: document.getElementById('receipt-message'),
+
+  // Filtres Journal
+  journalFilter: document.getElementById('journal-filter'),
+  journalDateFrom: document.getElementById('journal-date-from'),
+  journalDateTo: document.getElementById('journal-date-to'),
+  resetJournalFilters: document.getElementById('reset-journal-filters'),
+  journalMessage: document.getElementById('journal-message'),
+
+  // Sections
+  dashboardContainer: document.getElementById('dashboard-section'),
+  settingsMessage: document.getElementById('settings-message'),
+};
 // ============================================
 // AUTHENTIFICATION SUPABASE
 // ============================================
