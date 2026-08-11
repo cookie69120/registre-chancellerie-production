@@ -167,7 +167,7 @@ async function loginUser() {
       return;
     }
 
-    // ✅ CHANGÉ: Charge le profil depuis 'profiles'
+    // ✅ Charge le profil depuis 'profiles'
     const { data: profile, error: profileError } = await supabaseClient
       .from('profiles')
       .select('*')
@@ -182,9 +182,20 @@ async function loginUser() {
       return;
     }
 
-    appState.currentUser = profile;
+    // ✅ NOUVEAU: Charge le rôle de l'utilisateur depuis 'user_roles'
+    const { data: userRole, error: roleError } = await supabaseClient
+      .from('user_roles')
+      .select('role')
+      .eq('email', email)
+      .single();
+
+    appState.currentUser = {
+      ...profile,
+      role: userRole?.role || 'user'  // ✅ Ajoute le rôle
+    };
     appState.isAuthenticated = true;
 
+    console.log('✅ Connecté:', appState.currentUser.name, 'Rôle:', appState.currentUser.role);
     showMessage(elements.loginMessage, `✅ Bienvenue ${profile.name}!`, 'success');
     elements.loginForm.reset();
     await loadAppData();
