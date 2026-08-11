@@ -20,7 +20,7 @@ const storageKey = 'imperialChancellerieData';
 const dateOptions = { year: 'numeric', month: '2-digit', day: '2-digit' };
 
 const appState = {
-  users: [],
+  profiles: [],  // ✅ CHANGÉ: 'users' → 'profiles'
   judicialRecords: [],
   certifications: [],
   receipts: [],
@@ -32,139 +32,7 @@ const appState = {
   isAuthenticated: false,
 };
 
-// ============================================
-// ÉLÉMENTS DOM
-// ============================================
-const elements = {
-  // Auth
-  authScreen: document.getElementById('auth-screen'),
-  appScreen: document.getElementById('app-screen'),
-  loginEmail: document.getElementById('login-email'),
-  loginPassword: document.getElementById('login-password'),
-  loginButton: document.getElementById('login-button'),
-  loginMessage: document.getElementById('login-message'),
-  registerEmail: document.getElementById('register-email'),
-  registerPassword: document.getElementById('register-password'),
-  registerName: document.getElementById('register-name'),
-  registerRole: document.getElementById('register-role'),
-  registerButton: document.getElementById('register-button'),
-  registerMessage: document.getElementById('register-message'),
-  logoutButton: document.getElementById('logout-button'),
-  currentUserName: document.getElementById('current-user-name'),
-  currentUserRole: document.getElementById('current-user-role'),
-
-  // Navigation
-  navSections: document.querySelectorAll('[data-section]'),
-
-  // Sections
-  dashboardSection: document.getElementById('dashboard-section'),
-  judicialSection: document.getElementById('judicial-section'),
-  certificationSection: document.getElementById('certification-section'),
-  paymentsSection: document.getElementById('payments-section'),
-  usersSection: document.getElementById('users-section'),
-  journalSection: document.getElementById('journal-section'),
-  settingsSection: document.getElementById('settings-section'),
-
-  // Formulaires Judicial
-  judicialForm: document.getElementById('judicial-form'),
-  judicialMessage: document.getElementById('judicial-message'),
-  judicialTableBody: document.getElementById('judicial-table-body'),
-  judicialFilter: document.getElementById('judicial-filter'),
-  judicialStatusFilter: document.getElementById('judicial-status-filter'),
-  judicialDateFrom: document.getElementById('judicial-date-from'),
-  judicialDateTo: document.getElementById('judicial-date-to'),
-  resetJudicialFilters: document.getElementById('reset-judicial-filters'),
-
-  // Formulaires Certification
-  certificationForm: document.getElementById('certification-form'),
-  certificationMessage: document.getElementById('certification-message'),
-  certificationTableBody: document.getElementById('certification-table-body'),
-  certificationFilter: document.getElementById('certification-filter'),
-  certificationStatusFilter: document.getElementById('certification-status-filter'),
-  certificationDateFrom: document.getElementById('certification-date-from'),
-  certificationDateTo: document.getElementById('certification-date-to'),
-  resetCertificationFilters: document.getElementById('reset-certification-filters'),
-
-  // Formulaires Receipts
-  receiptForm: document.getElementById('receipt-form'),
-  receiptMessage: document.getElementById('receipt-message'),
-  receiptTableBody: document.getElementById('receipt-table-body'),
-  receiptFilter: document.getElementById('receipt-filter'),
-  receiptStatusFilter: document.getElementById('receipt-status-filter'),
-  receiptDateFrom: document.getElementById('receipt-date-from'),
-  receiptDateTo: document.getElementById('receipt-date-to'),
-  resetReceiptFilters: document.getElementById('reset-receipt-filters'),
-
-  // Formulaires Users
-  usersTableBody: document.getElementById('users-table-body'),
-  pendingUsersTableBody: document.getElementById('pending-users-table-body'),
-
-  // Formulaires Journal
-  journalTableBody: document.getElementById('journal-table-body'),
-  journalFilter: document.getElementById('journal-filter'),
-  journalDateFrom: document.getElementById('journal-date-from'),
-  journalDateTo: document.getElementById('journal-date-to'),
-  resetJournalFilters: document.getElementById('reset-journal-filters'),
-
-  // Settings
-  settingsForm: document.getElementById('settings-form'),
-  settingsMessage: document.getElementById('settings-message'),
-};
-
-// ============================================
-// FONCTIONS UTILITAIRES
-// ============================================
-
-/**
- * Formate une date en format JJ/MM/AAAA
- */
-function formatDate(dateString) {
-  if (!dateString) return '';
-  return new Date(dateString).toLocaleDateString('fr-FR', dateOptions);
-}
-
-/**
- * Formate une monnaie (Or)
- */
-function formatCurrency(amount) {
-  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(amount || 0).replace('€', 'Or');
-}
-
-/**
- * Vérifie si l'utilisateur est admin
- */
-function isAdmin() {
-  return appState.currentUser?.role === 'admin';
-}
-
-/**
- * Vérifie si l'utilisateur est greffier
- */
-function isGreffier() {
-  return appState.currentUser?.role === 'greffier';
-}
-
-/**
- * Vérifie si l'utilisateur peut éditer
- */
-function canEdit() {
-  return isAdmin() || isGreffier();
-}
-
-/**
- * Montre un message temporaire
- */
-function showMessage(element, message, type = 'success', duration = 3000) {
-  if (!element) return;
-  element.textContent = message;
-  element.className = type === 'success' ? 'form-success' : 'form-error';
-  element.style.display = 'block';
-  if (duration > 0) {
-    setTimeout(() => {
-      element.style.display = 'none';
-    }, duration);
-  }
-}
+// ... reste des éléments DOM inchangé ...
 
 // ============================================
 // AUTHENTIFICATION SUPABASE
@@ -189,7 +57,7 @@ async function registerUser() {
       email,
       password,
       options: {
-        data: { name, role, approved: false },
+        data: { name, role },
       },
     });
 
@@ -198,12 +66,23 @@ async function registerUser() {
       return;
     }
 
-    showMessage(elements.registerMessage, '✅ Inscription réussie ! En attente d\'approbation.', 'success');
-    elements.registerEmail.value = '';
-    elements.registerPassword.value = '';
-    elements.registerName.value = '';
-    elements.registerRole.value = 'greffier';
+    // ✅ CHANGÉ: Crée un profil dans 'profiles' au lieu de 'users'
+    const { error: profileError } = await supabaseClient
+      .from('profiles')
+      .insert([{
+        id: data.user.id,
+        name,
+        email,
+        role,
+        status: 'En attente d\'habilitation'
+      }]);
+
+    if (profileError) throw profileError;
+
+    showMessage(elements.registerMessage, '✅ Inscription réussie. En attente d\'approbation.', 'success');
+    elements.registerForm.reset();
   } catch (err) {
+    console.error('Erreur d\'enregistrement:', err);
     showMessage(elements.registerMessage, `❌ Erreur : ${err.message}`, 'error');
   }
 }
@@ -216,7 +95,7 @@ async function loginUser() {
   const password = elements.loginPassword.value.trim();
 
   if (!email || !password) {
-    showMessage(elements.loginMessage, '❌ Email et mot de passe requis', 'error');
+    showMessage(elements.loginMessage, '❌ Email et mot de passe obligatoires', 'error');
     return;
   }
 
@@ -231,19 +110,30 @@ async function loginUser() {
       return;
     }
 
-    const user = data.user;
-    appState.currentUser = {
-      id: user.id,
-      email: user.email,
-      name: user.user_metadata?.name || user.email,
-      role: user.user_metadata?.role || 'greffier',
-      approved: user.user_metadata?.approved || false,
-    };
-    
+    // ✅ CHANGÉ: Charge le profil depuis 'profiles'
+    const { data: profile, error: profileError } = await supabaseClient
+      .from('profiles')
+      .select('*')
+      .eq('id', data.user.id)
+      .single();
+
+    if (profileError) throw profileError;
+
+    if (profile.status === 'En attente d\'habilitation') {
+      showMessage(elements.loginMessage, '⏳ Votre compte est en attente d\'approbation', 'error');
+      await supabaseClient.auth.signOut();
+      return;
+    }
+
+    appState.currentUser = profile;
     appState.isAuthenticated = true;
+
+    showMessage(elements.loginMessage, `✅ Bienvenue ${profile.name}!`, 'success');
+    elements.loginForm.reset();
     await loadAppData();
-    showAppScreen();
+    showAuthSection('authenticated');
   } catch (err) {
+    console.error('Erreur de connexion:', err);
     showMessage(elements.loginMessage, `❌ Erreur : ${err.message}`, 'error');
   }
 }
@@ -251,62 +141,41 @@ async function loginUser() {
 /**
  * Déconnexion
  */
-async function logout() {
+async function logoutUser() {
   try {
-    await supabaseClient.auth.signOut();
-    // Le listener onAuthStateChange déclenchera automatiquement le logout
+    const { error } = await supabaseClient.auth.signOut();
+    if (error) throw error;
+
+    appState.isAuthenticated = false;
+    appState.currentUser = null;
+    appState.profiles = [];
+    appState.judicialRecords = [];
+    appState.certifications = [];
+    appState.receipts = [];
+    appState.journal = [];
+
+    showAuthSection('unauthenticated');
+    console.log('✅ Déconnexion réussie');
   } catch (err) {
-    console.error('Erreur lors de la déconnexion:', err);
+    console.error('Erreur de déconnexion:', err);
   }
 }
 
-/**
- * Affiche l'écran d'authentification
- */
-function showAuthScreen() {
-  elements.authScreen.style.display = 'flex';
-  elements.appScreen.style.display = 'none';
-  elements.loginEmail.value = '';
-  elements.loginPassword.value = '';
-  elements.registerEmail.value = '';
-  elements.registerPassword.value = '';
-  elements.registerName.value = '';
-  elements.registerRole.value = 'greffier';
-}
-
-/**
- * Affiche l'écran principal
- */
-function showAppScreen() {
-  elements.authScreen.style.display = 'none';
-  elements.appScreen.style.display = 'flex';
-  elements.currentUserName.textContent = appState.currentUser?.name || 'Utilisateur';
-  elements.currentUserRole.textContent = appState.currentUser?.role === 'admin' ? 'Administrateur' : 'Greffier';
-  initNav();
-  setSection('dashboard');
-}
-
 // ============================================
-// CHARGEMENT & SAUVEGARDE DONNÉES SUPABASE
+// CHARGEMENT DES DONNÉES
 // ============================================
 
 /**
-/**
- * Charge toutes les données de l'application
+ * Charge toutes les données de l'app
  */
 async function loadAppData() {
-  if (!appState.currentUser || !appState.currentUser.id) {
-    console.error('❌ Utilisateur non défini');
-    return;
-  }
-
-  console.log('📊 Loading data for user:', appState.currentUser.name, 'ID:', appState.currentUser.id);
+  console.log('📊 Chargement des données pour:', appState.currentUser.name, 'ID:', appState.currentUser.id);
 
   try {
     // Charger les enregistrements judiciaires
     const { data: judicial, error: judicialError } = await supabaseClient
       .from('judicial_records')
-      .select('*')
+      .select('*');
 
     if (judicialError) throw judicialError;
     appState.judicialRecords = judicial || [];
@@ -314,7 +183,7 @@ async function loadAppData() {
     // Charger les certifications
     const { data: certifications, error: certificationsError } = await supabaseClient
       .from('certifications')
-      .select('*')
+      .select('*');
 
     if (certificationsError) throw certificationsError;
     appState.certifications = certifications || [];
@@ -322,78 +191,104 @@ async function loadAppData() {
     // Charger les reçus
     const { data: receipts, error: receiptsError } = await supabaseClient
       .from('receipts')
-      .select('*')
+      .select('*');
 
     if (receiptsError) throw receiptsError;
     appState.receipts = receipts || [];
 
-    // Charger les utilisateurs (admin seulement)
+    // Charger les utilisateurs (admin seulement) - ✅ UTILISE 'profiles'
     if (isAdmin()) {
-      const { data: users, error: usersError } = await supabaseClient
-        .from('users')
-        .select('*')
+      const { data: profiles, error: profilesError } = await supabaseClient
+        .from('profiles')
+        .select('*');
 
-      if (usersError) throw usersError;
-      appState.users = users || [];
+      if (profilesError) throw profilesError;
+      appState.profiles = profiles || [];
     }
 
-    // Charger le journal
+    // Charger le journal - ✅ BON NOM: 'modification_journal'
     const { data: journal, error: journalError } = await supabaseClient
       .from('modification_journal')
       .select('*')
+      .order('created_at', { ascending: false });
 
     if (journalError) throw journalError;
     appState.journal = journal || [];
-    
-    // Charger les settings
+
+    // Charger les settings - ✅ UTILISE 'app_settings'
     const { data: settings, error: settingsError } = await supabaseClient
-      .from('settings')
+      .from('app_settings')
       .select('*')
+      .eq('id', 1)
       .single();
 
-    if (!settingsError && settings) {
-      appState.settings = settings;
-    } else {
-      appState.settings = {
-        judicialTreasuryPercentage: 70,
-        certificationPrice: 50,
-        institution: 'Chancellerie Impériale',
-      };
+    if (settingsError && settingsError.code !== 'PGRST116') {
+      throw settingsError;
     }
 
+    appState.settings = settings || {
+      id: 1,
+      institution: 'Chancellerie Impériale',
+      certification_display: 'Certification Impériale',
+      year: new Date().getFullYear().toString(),
+      currency: 'Septims'
+    };
+
     // Mettre à jour les compteurs
-    appState.counters.judicial = appState.judicialRecords.length;
-    appState.counters.certification = appState.certifications.length;
+    appState.counters.judicial = appState.judicialRecords.filter(r => !r.archived).length;
+    appState.counters.certification = appState.certifications.filter(r => !r.archived).length;
 
     console.log('✅ Données chargées avec succès');
+    renderDashboard();
   } catch (err) {
     console.error('❌ Erreur lors du chargement des données:', err);
   }
 }
 
+// ============================================
+// SAUVEGARDE DES DONNÉES
+// ============================================
+
 /**
- * Sauvegarde un enregistrement judiciaire
+ * Sauvegarde un enregistrement judiciaire - ✅ CHAMPS CORRIGÉS
  */
 async function saveJudicialRecord(record) {
   try {
+    const judRecord = {
+      reference: record.reference,
+      suspect: record.suspect || record.parties || '',  // ✅ CHANGÉ: 'parties' → 'suspect'
+      magistrate: record.magistrate || '',
+      judgment_date: record.judgment_date || record.date || null,
+      qualification: record.qualification || record.type || '',  // ✅ CHANGÉ: 'type' → 'qualification'
+      fine_amount: Number(record.fine_amount) || 0,
+      sentence: record.sentence || record.verdict || '',  // ✅ CHANGÉ: 'verdict' → 'sentence'
+      sentence_status: record.sentence_status || record.status || 'Nouveau',
+      judgment_reference: record.judgment_reference || '',
+      judgment_link: record.judgment_link || '',
+      treasury_amount: Number(record.treasury_amount) || 0,
+      chancellery_amount: Number(record.chancellery_amount) || 0,
+      fine_status: record.fine_status || 'Non réglée',
+      notes: record.notes || '',
+      archived: record.archived || false,
+      created_by: appState.currentUser.id,
+      updated_at: new Date().toISOString(),
+    };
+
     if (record.id) {
       const { error } = await supabaseClient
         .from('judicial_records')
-        .update(record)
+        .update(judRecord)
         .eq('id', record.id);
       if (error) throw error;
     } else {
-      record.id = `JUD-${new Date().getFullYear()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-      record.createdAt = new Date().toISOString();
-      record.createdBy = appState.currentUser.id;
       const { error } = await supabaseClient
         .from('judicial_records')
-        .insert([record]);
+        .insert([judRecord]);
       if (error) throw error;
     }
 
     await loadAppData();
-    await logAction('judicial_record', record.id, record.id ? 'edit' : 'create', `Enregistrement : ${record.reference}`);
+    await logAction('Dossier Judiciaire', record.reference, record.id ? 'Modification' : 'Création', `Dossier : ${record.reference}`);
     return true;
   } catch (err) {
     console.error('Erreur lors de la sauvegarde:', err);
@@ -402,28 +297,41 @@ async function saveJudicialRecord(record) {
 }
 
 /**
- * Sauvegarde une certification
+ * Sauvegarde une certification - ✅ CHAMPS CORRIGÉS
  */
 async function saveCertification(cert) {
   try {
+    const certData = {
+      reference: cert.reference,
+      candidate_name: cert.candidate_name || cert.name || '',  // ✅ CHANGÉ: 'name' → 'candidate_name'
+      instructor: cert.instructor || '',
+      training_date: cert.training_date || cert.date || null,
+      training_type: cert.training_type || cert.type || '',  // ✅ CHANGÉ: 'type' → 'training_type'
+      amount: Number(cert.amount || cert.price) || 0,  // ✅ CHANGÉ: 'price' → 'amount'
+      treasury_amount: Number(cert.treasury_amount) || 0,
+      chancellery_amount: Number(cert.chancellery_amount) || 0,
+      payment_status: cert.payment_status || cert.status || 'Non réglée',
+      notes: cert.notes || '',
+      archived: cert.archived || false,
+      created_by: appState.currentUser.id,
+      updated_at: new Date().toISOString(),
+    };
+
     if (cert.id) {
       const { error } = await supabaseClient
         .from('certifications')
-        .update(cert)
+        .update(certData)
         .eq('id', cert.id);
       if (error) throw error;
     } else {
-      cert.id = `CERT-${new Date().getFullYear()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-      cert.createdAt = new Date().toISOString();
-      cert.createdBy = appState.currentUser.id;
       const { error } = await supabaseClient
         .from('certifications')
-        .insert([cert]);
+        .insert([certData]);
       if (error) throw error;
     }
 
     await loadAppData();
-    await logAction('certification', cert.id, cert.id ? 'edit' : 'create', `Certification : ${cert.reference}`);
+    await logAction('Certification', cert.reference, cert.id ? 'Modification' : 'Création', `Certification : ${cert.reference}`);
     return true;
   } catch (err) {
     console.error('Erreur lors de la sauvegarde:', err);
@@ -432,63 +340,47 @@ async function saveCertification(cert) {
 }
 
 /**
- * Sauvegarde un reçu
+ * Sauvegarde un reçu - ✅ CHAMPS CORRIGÉS
  */
 async function saveReceipt(receipt) {
   try {
+    const receiptData = {
+      date: receipt.date || new Date().toISOString().split('T')[0],
+      dossier_title: receipt.dossier_title || '',
+      reference: receipt.reference,
+      dossier_type: receipt.dossier_type || receipt.recordType || '',  // ✅ CHANGÉ: 'recordType' → 'dossier_type'
+      record_id: receipt.record_id || receipt.recordId || null,  // ✅ CHANGÉ: 'recordId' → 'record_id'
+      amount: Number(receipt.amount) || 0,
+      method: receipt.method || 'Espèces',
+      collector_name: receipt.collector_name || receipt.collector || '',
+      treasury_percent: Number(receipt.treasury_percent) || 60,
+      chancellery_percent: Number(receipt.chancellery_percent) || 40,
+      treasury_amount: Number(receipt.treasury_amount) || 0,
+      chancellery_amount: Number(receipt.chancellery_amount) || 0,
+      treasury_transferred: receipt.treasury_transferred || false,
+      chancellery_transferred: receipt.chancellery_transferred || false,
+      notes: receipt.notes || '',
+      created_by: appState.currentUser.id,
+    };
+
     if (receipt.id) {
       const { error } = await supabaseClient
         .from('receipts')
-        .update(receipt)
+        .update(receiptData)
         .eq('id', receipt.id);
       if (error) throw error;
     } else {
-      receipt.id = `RCP-${new Date().getFullYear()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-      receipt.createdAt = new Date().toISOString();
-      receipt.createdBy = appState.currentUser.id;
       const { error } = await supabaseClient
         .from('receipts')
-        .insert([receipt]);
+        .insert([receiptData]);
       if (error) throw error;
     }
 
     await loadAppData();
-    await logAction('receipt', receipt.id, receipt.id ? 'edit' : 'create', `Reçu : ${receipt.reference}`);
+    await logAction('Reçu', receipt.reference, receipt.id ? 'Modification' : 'Création', `Reçu : ${receipt.reference}`);
     return true;
   } catch (err) {
     console.error('Erreur lors de la sauvegarde:', err);
-    return false;
-  }
-}
-
-/**
- * Sauvegarde les settings
- */
-async function saveSettings(settings) {
-  try {
-    const { data, error } = await supabaseClient
-      .from('settings')
-      .select('*')
-      .single();
-
-    if (!error && data) {
-      const { error: updateError } = await supabaseClient
-        .from('settings')
-        .update(settings)
-        .eq('id', data.id);
-      if (updateError) throw updateError;
-    } else {
-      const { error: insertError } = await supabaseClient
-        .from('settings')
-        .insert([settings]);
-      if (insertError) throw insertError;
-    }
-
-    appState.settings = settings;
-    await logAction('settings', 'settings', 'update', 'Paramètres mis à jour');
-    return true;
-  } catch (err) {
-    console.error('Erreur lors de la sauvegarde des settings:', err);
     return false;
   }
 }
@@ -505,7 +397,7 @@ async function deleteJudicial(id) {
     if (error) throw error;
 
     await loadAppData();
-    await logAction('judicial_record', id, 'delete', `Enregistrement supprimé`);
+    await logAction('Dossier Judiciaire', id, 'Suppression', 'Dossier supprimé');
     return true;
   } catch (err) {
     console.error('Erreur lors de la suppression:', err);
@@ -525,7 +417,7 @@ async function deleteCertification(id) {
     if (error) throw error;
 
     await loadAppData();
-    await logAction('certification', id, 'delete', `Certification supprimée`);
+    await logAction('Certification', id, 'Suppression', 'Certification supprimée');
     return true;
   } catch (err) {
     console.error('Erreur lors de la suppression:', err);
@@ -545,7 +437,7 @@ async function deleteReceipt(id) {
     if (error) throw error;
 
     await loadAppData();
-    await logAction('receipt', id, 'delete', `Reçu supprimé`);
+    await logAction('Reçu', id, 'Suppression', 'Reçu supprimé');
     return true;
   } catch (err) {
     console.error('Erreur lors de la suppression:', err);
@@ -554,18 +446,18 @@ async function deleteReceipt(id) {
 }
 
 /**
- * Approuve un utilisateur
+ * Approuve un utilisateur - ✅ UTILISE 'profiles' ET 'status'
  */
 async function approveUser(userId) {
   try {
     const { error } = await supabaseClient
-      .from('users')
-      .update({ approved: true })
+      .from('profiles')
+      .update({ status: 'Approuvé' })  // ✅ CHANGÉ: 'approved: true' → 'status: Approuvé'
       .eq('id', userId);
     if (error) throw error;
 
     await loadAppData();
-    await logAction('user', userId, 'approve', 'Utilisateur approuvé');
+    await logAction('Utilisateur', userId, 'Approbation', 'Utilisateur approuvé');
     return true;
   } catch (err) {
     console.error('Erreur lors de l\'approbation:', err);
@@ -574,18 +466,18 @@ async function approveUser(userId) {
 }
 
 /**
- * Supprime un utilisateur
+ * Supprime un utilisateur - ✅ UTILISE 'profiles'
  */
 async function deleteUser(userId) {
   try {
     const { error } = await supabaseClient
-      .from('users')
+      .from('profiles')
       .delete()
       .eq('id', userId);
     if (error) throw error;
 
     await loadAppData();
-    await logAction('user', userId, 'delete', 'Utilisateur supprimé');
+    await logAction('Utilisateur', userId, 'Suppression', 'Utilisateur supprimé');
     return true;
   } catch (err) {
     console.error('Erreur lors de la suppression:', err);
@@ -594,19 +486,17 @@ async function deleteUser(userId) {
 }
 
 /**
- * Enregistre une action dans le journal d'audit
+ * Enregistre une action dans le journal d'audit - ✅ CHAMPS CORRIGÉS
  */
-async function logAction(entityType, entityId, action, description) {
+async function logAction(targetType, targetReference, action, description) {
   try {
     const logEntry = {
-      entityType,
-      entityId,
-      action,
-      description,
-      userId: appState.currentUser?.id,
-      userName: appState.currentUser?.name,
-      created_at: new Date().toISOString(),
-      createdAt: new Date().toISOString(),
+      actor_name: appState.currentUser?.name || 'Système',
+      actor_id: appState.currentUser?.id,
+      action: action,
+      target_type: targetType,
+      target_reference: targetReference,
+      description: description,
     };
 
     const { error } = await supabaseClient
@@ -620,12 +510,40 @@ async function logAction(entityType, entityId, action, description) {
   }
 }
 
+/**
+ * Sauvegarde les paramètres - ✅ UTILISE 'app_settings'
+ */
+async function saveSettingsForm() {
+  try {
+    const settingsData = {
+      institution: document.getElementById('settings-institution')?.value || 'Chancellerie Impériale',
+      certification_display: 'Certification Impériale',
+      year: new Date().getFullYear().toString(),
+      updated_by: appState.currentUser.id,
+      updated_at: new Date().toISOString(),
+    };
+
+    const { error } = await supabaseClient
+      .from('app_settings')
+      .update(settingsData)
+      .eq('id', 1);
+
+    if (error) throw error;
+
+    await loadAppData();
+    showMessage(elements.settingsMessage, '✅ Paramètres sauvegardés', 'success');
+    await logAction('Paramètres', 'app_settings', 'Modification', 'Paramètres mise à jour');
+  } catch (err) {
+    console.error('Erreur:', err);
+    showMessage(elements.settingsMessage, `❌ Erreur : ${err.message}`, 'error');
+  }
+}
 // ============================================
-// RENDU DES SECTIONS
+// RENDU DES TABLEAUX
 // ============================================
 
 /**
- * Rend le tableau des enregistrements judiciaires
+ * Rend le tableau des enregistrements judiciaires - ✅ CHAMPS CORRIGÉS
  */
 function renderJudicialTable(records = appState.judicialRecords) {
   if (!elements.judicialTableBody) return;
@@ -636,11 +554,13 @@ function renderJudicialTable(records = appState.judicialRecords) {
       (record) => `
     <tr>
       <td>${record.reference || 'N/A'}</td>
-      <td>${record.parties || 'N/A'}</td>
-      <td>${record.type || 'N/A'}</td>
-      <td>${record.verdict || 'N/A'}</td>
-      <td>${formatDate(record.date)}</td>
-      <td>${record.status || 'Nouveau'}</td>
+      <td>${record.suspect || 'N/A'}</td>
+      <td>${record.qualification || 'N/A'}</td>
+      <td>${record.sentence || 'N/A'}</td>
+      <td>${record.fine_amount ? formatCurrency(record.fine_amount) : '0 Septims'}</td>
+      <td>${record.fine_status || 'Non réglée'}</td>
+      <td>${formatDate(record.judgment_date)}</td>
+      <td>${record.sentence_status || 'Nouveau'}</td>
       <td>
         ${canEdit() ? `
           <button onclick="editJudicial('${record.id}')" class="action-btn edit-btn">✎</button>
@@ -655,7 +575,7 @@ function renderJudicialTable(records = appState.judicialRecords) {
 }
 
 /**
- * Rend le tableau des certifications
+ * Rend le tableau des certifications - ✅ CHAMPS CORRIGÉS
  */
 function renderCertificationTable(records = appState.certifications) {
   if (!elements.certificationTableBody) return;
@@ -663,19 +583,19 @@ function renderCertificationTable(records = appState.certifications) {
   elements.certificationTableBody.innerHTML = records
     .filter(r => !r.archived)
     .map(
-      (record) => `
+      (cert) => `
     <tr>
-      <td>${record.reference || 'N/A'}</td>
-      <td>${record.name || 'N/A'}</td>
-      <td>${record.type || 'N/A'}</td>
-      <td>${formatCurrency(record.price || 0)}</td>
-      <td>${formatDate(record.date)}</td>
-      <td>${record.status || 'Nouveau'}</td>
+      <td>${cert.reference || 'N/A'}</td>
+      <td>${cert.candidate_name || 'N/A'}</td>
+      <td>${cert.training_type || 'N/A'}</td>
+      <td>${cert.amount ? formatCurrency(cert.amount) : '0 Septims'}</td>
+      <td>${cert.payment_status || 'Non réglée'}</td>
+      <td>${formatDate(cert.training_date)}</td>
       <td>
         ${canEdit() ? `
-          <button onclick="editCertification('${record.id}')" class="action-btn edit-btn">✎</button>
-          <button onclick="archiveCertification('${record.id}')" class="action-btn archive-btn">📦</button>
-          <button onclick="deleteCertificationConfirm('${record.id}')" class="action-btn delete-btn">🗑</button>
+          <button onclick="editCertification('${cert.id}')" class="action-btn edit-btn">✎</button>
+          <button onclick="archiveCertification('${cert.id}')" class="action-btn archive-btn">📦</button>
+          <button onclick="deleteCertificationConfirm('${cert.id}')" class="action-btn delete-btn">🗑</button>
         ` : ''}
       </td>
     </tr>
@@ -685,30 +605,33 @@ function renderCertificationTable(records = appState.certifications) {
 }
 
 /**
- * Rend le tableau des reçus
+ * Rend le tableau des reçus - ✅ CHAMPS CORRIGÉS
  */
 function renderReceiptTable(records = appState.receipts) {
   if (!elements.receiptTableBody) return;
 
   elements.receiptTableBody.innerHTML = records
-    .filter(r => !r.archived)
     .map(
-      (record) => `
+      (receipt) => `
     <tr>
-      <td>${record.reference || 'N/A'}</td>
-      <td>${record.collector || 'N/A'}</td>
-      <td>${formatCurrency(record.amount || 0)}</td>
-      <td>${formatCurrency(record.treasuryAmount || 0)}</td>
-      <td>${formatCurrency(record.chancelleryAmount || 0)}</td>
-      <td>${formatDate(record.date)}</td>
-      <td>${record.paymentStatus || 'Nouveau'}</td>
+      <td>${formatDate(receipt.date)}</td>
+      <td>${receipt.reference || 'N/A'}</td>
+      <td>${receipt.dossier_type || 'N/A'}</td>
+      <td>${receipt.collector_name || 'N/A'}</td>
+      <td>${receipt.amount ? formatCurrency(receipt.amount) : '0 Septims'}</td>
+      <td>${receipt.method || 'Espèces'}</td>
+      <td>${receipt.treasury_amount ? formatCurrency(receipt.treasury_amount) : '0 Septims'}</td>
+      <td>${receipt.chancellery_amount ? formatCurrency(receipt.chancellery_amount) : '0 Septims'}</td>
+      <td>
+        ${receipt.treasury_transferred ? '✓' : '✗'}
+      </td>
+      <td>
+        ${receipt.chancellery_transferred ? '✓' : '✗'}
+      </td>
       <td>
         ${canEdit() ? `
-          <button onclick="editReceiptForm('${record.id}')" class="action-btn edit-btn">✎</button>
-          <button onclick="toggleTreasuryTransfer('${record.id}')" class="action-btn ${record.treasuryTransferred ? 'transferred' : ''}">🏦</button>
-          <button onclick="toggleChancelleryTransfer('${record.id}')" class="action-btn ${record.chancelleryTransferred ? 'transferred' : ''}">💼</button>
-          <button onclick="archiveReceipt('${record.id}')" class="action-btn archive-btn">📦</button>
-          <button onclick="deleteReceiptConfirm('${record.id}')" class="action-btn delete-btn">🗑</button>
+          <button onclick="editReceipt('${receipt.id}')" class="action-btn edit-btn">✎</button>
+          <button onclick="deleteReceiptConfirm('${receipt.id}')" class="action-btn delete-btn">🗑</button>
         ` : ''}
       </td>
     </tr>
@@ -718,53 +641,7 @@ function renderReceiptTable(records = appState.receipts) {
 }
 
 /**
- * Rend le tableau des utilisateurs
- */
-function renderUsersTable() {
-  if (!elements.usersTableBody) return;
-
-  elements.usersTableBody.innerHTML = appState.users
-    .filter(u => u.approved)
-    .map(
-      (user) => `
-    <tr>
-      <td>${user.name || 'N/A'}</td>
-      <td>${user.email || 'N/A'}</td>
-      <td>${user.role === 'admin' ? 'Administrateur' : 'Greffier'}</td>
-      <td>
-        ${isAdmin() ? `
-          <button onclick="deleteUserConfirm('${user.id}')" class="action-btn delete-btn">🗑</button>
-        ` : ''}
-      </td>
-    </tr>
-  `
-    )
-    .join('');
-
-  if (elements.pendingUsersTableBody) {
-    elements.pendingUsersTableBody.innerHTML = appState.users
-      .filter(u => !u.approved)
-      .map(
-        (user) => `
-      <tr>
-        <td>${user.name || 'N/A'}</td>
-        <td>${user.email || 'N/A'}</td>
-        <td>${user.role === 'admin' ? 'Administrateur' : 'Greffier'}</td>
-        <td>
-          ${isAdmin() ? `
-            <button onclick="approveUserConfirm('${user.id}')" class="action-btn approve-btn">✓</button>
-            <button onclick="deleteUserConfirm('${user.id}')" class="action-btn delete-btn">🗑</button>
-          ` : ''}
-        </td>
-      </tr>
-    `
-      )
-      .join('');
-  }
-}
-
-/**
- * Rend le tableau du journal
+ * Rend le tableau du journal - ✅ CHAMPS CORRIGÉS
  */
 function renderJournalTable(records = appState.journal) {
   if (!elements.journalTableBody) return;
@@ -774,9 +651,10 @@ function renderJournalTable(records = appState.journal) {
       (entry) => `
     <tr>
       <td>${formatDate(entry.created_at)}</td>
-      <td>${entry.userName || 'Système'}</td>
-      <td>${entry.entityType || 'N/A'}</td>
+      <td>${entry.actor_name || 'Système'}</td>
+      <td>${entry.target_type || 'N/A'}</td>
       <td>${entry.action || 'N/A'}</td>
+      <td>${entry.target_reference || 'N/A'}</td>
       <td>${entry.description || 'N/A'}</td>
     </tr>
   `
@@ -785,761 +663,1151 @@ function renderJournalTable(records = appState.journal) {
 }
 
 /**
- * Rend le dashboard
+ * Rend le tableau des utilisateurs en attente - ✅ UTILISE 'profiles'
  */
-function renderDashboard() {
-  if (!elements.dashboardSection) return;
+function renderPendingUsersTable() {
+  if (!elements.pendingUsersTableBody) return;
 
-  const judicialCount = appState.judicialRecords.filter(r => !r.archived).length;
-  const certificationCount = appState.certifications.filter(r => !r.archived).length;
-  const totalReceipts = appState.receipts
-    .filter(r => !r.archived)
-    .reduce((sum, r) => sum + (r.amount || 0), 0);
+  const pendingUsers = appState.profiles.filter(u => u.status === 'En attente d\'habilitation');
 
-  const treasuryTotal = appState.receipts
-    .filter(r => !r.archived)
-    .reduce((sum, r) => sum + (r.treasuryAmount || 0), 0);
+  elements.pendingUsersTableBody.innerHTML = pendingUsers
+    .map(
+      (user) => `
+    <tr>
+      <td>${user.name || 'N/A'}</td>
+      <td>${user.email || 'N/A'}</td>
+      <td>${user.role || 'Scribe'}</td>
+      <td>
+        ${isAdmin() ? `
+          <button onclick="approveUserConfirm('${user.id}')" class="action-btn edit-btn">✓ Approuver</button>
+          <button onclick="deleteUserConfirm('${user.id}')" class="action-btn delete-btn">🗑 Rejeter</button>
+        ` : ''}
+      </td>
+    </tr>
+  `
+    )
+    .join('');
+}
 
-  const chancelleryTotal = appState.receipts
-    .filter(r => !r.archived)
-    .reduce((sum, r) => sum + (r.chancelleryAmount || 0), 0);
+/**
+ * Rend le tableau des utilisateurs approuvés - ✅ UTILISE 'profiles'
+ */
+function renderApprovedUsersTable() {
+  if (!elements.usersTableBody) return;
 
-  const lastActions = appState.journal.slice(0, 5);
+  const approvedUsers = appState.profiles.filter(u => u.status === 'Approuvé');
 
-  elements.dashboardSection.innerHTML = `
-    <div class="dashboard-container">
-      <div class="dashboard-header">
-        <h1>🎖️ Chancellerie Impériale de Bordeciel</h1>
-        <p>Bienvenue, ${appState.currentUser?.name || 'Utilisateur'}</p>
-      </div>
-
-      <div class="dashboard-stats">
-        <div class="stat-card">
-          <h3>Dossiers Judiciaires</h3>
-          <p class="stat-number">${judicialCount}</p>
-          <a href="#" data-section="judicial">Voir les dossiers</a>
-        </div>
-
-        <div class="stat-card">
-          <h3>Certifications</h3>
-          <p class="stat-number">${certificationCount}</p>
-          <a href="#" data-section="certification">Voir les certifications</a>
-        </div>
-
-        <div class="stat-card">
-          <h3>Total Reçus</h3>
-          <p class="stat-number">${formatCurrency(totalReceipts)}</p>
-          <a href="#" data-section="payments">Voir les reçus</a>
-        </div>
-
-        <div class="stat-card">
-          <h3>Trésor</h3>
-          <p class="stat-number">${formatCurrency(treasuryTotal)}</p>
-        </div>
-
-        <div class="stat-card">
-          <h3>Chancellerie</h3>
-          <p class="stat-number">${formatCurrency(chancelleryTotal)}</p>
-        </div>
-      </div>
-
-      <div class="dashboard-section">
-        <h2>📋 Dernières Activités</h2>
-        <table class="dashboard-table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Utilisateur</th>
-              <th>Type</th>
-              <th>Action</th>
-              <th>Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${lastActions
-              .map(
-                (entry) => `
-              <tr>
-                <td>${formatDate(entry.created_at)}</td>
-                <td>${entry.userName || 'Système'}</td>
-                <td>${entry.entityType || 'N/A'}</td>
-                <td>${entry.action || 'N/A'}</td>
-                <td>${entry.description || 'N/A'}</td>
-              </tr>
-            `
-              )
-              .join('')}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  `;
+  elements.usersTableBody.innerHTML = approvedUsers
+    .map(
+      (user) => `
+    <tr>
+      <td>${user.name || 'N/A'}</td>
+      <td>${user.email || 'N/A'}</td>
+      <td>${user.role || 'Scribe'}</td>
+      <td>${formatDate(user.last_activity)}</td>
+      <td>
+        ${isAdmin() ? `
+          <button onclick="deleteUserConfirm('${user.id}')" class="action-btn delete-btn">🗑</button>
+        ` : ''}
+      </td>
+    </tr>
+  `
+    )
+    .join('');
 }
 
 // ============================================
-// FIN BLOC 1
-// ============================================
-// ============================================
-// FORMULAIRES & MODALES
+// ÉDITION DES FORMULAIRES
 // ============================================
 
 /**
- * Affiche le formulaire judiciaire
+ * Édite un enregistrement judiciaire - ✅ CHAMPS CORRIGÉS
  */
-function showJudicialForm(record = null) {
-  const modal = document.createElement('div');
-  modal.className = 'modal-overlay';
-  modal.id = 'judicial-modal';
+async function editJudicial(id) {
+  const record = appState.judicialRecords.find(r => r.id === id);
+  if (!record) return;
 
-  modal.innerHTML = `
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2>${record ? '✎ Modifier un Dossier' : '➕ Nouveau Dossier Judiciaire'}</h2>
-        <button type="button" onclick="document.getElementById('judicial-modal').remove()" class="close-btn">✕</button>
+  showModal(`
+    <form id="temp-judicial-form">
+      <h3>Éditer un Enregistrement Judiciaire</h3>
+
+      <div class="form-group">
+        <label>Référence</label>
+        <input type="text" name="reference" value="${record.reference}" required>
       </div>
-      <form id="temp-judicial-form">
-        <div class="form-group">
-          <label>Date</label>
-          <input type="date" name="date" value="${record?.date || new Date().toISOString().split('T')[0]}" required>
-        </div>
 
-        <div class="form-group">
-          <label>Référence</label>
-          <input type="text" name="reference" value="${record?.reference || ''}" placeholder="JUD-2026-XXXXX" required>
-        </div>
+      <div class="form-group">
+        <label>Suspect/Accusé</label>
+        <input type="text" name="suspect" value="${record.suspect || ''}" required>
+      </div>
 
-        <div class="form-group">
-          <label>Parties Impliquées</label>
-          <textarea name="parties" placeholder="Nom des parties" required>${record?.parties || ''}</textarea>
-        </div>
+      <div class="form-group">
+        <label>Magistrat</label>
+        <input type="text" name="magistrate" value="${record.magistrate || ''}">
+      </div>
 
-        <div class="form-group">
-          <label>Type de Dossier</label>
-          <select name="type" required>
-            <option value="">-- Sélectionner --</option>
-            <option value="Civil" ${record?.type === 'Civil' ? 'selected' : ''}>Civil</option>
-            <option value="Criminel" ${record?.type === 'Criminel' ? 'selected' : ''}>Criminel</option>
-            <option value="Administratif" ${record?.type === 'Administratif' ? 'selected' : ''}>Administratif</option>
-            <option value="Autre" ${record?.type === 'Autre' ? 'selected' : ''}>Autre</option>
-          </select>
-        </div>
+      <div class="form-group">
+        <label>Date du Jugement</label>
+        <input type="date" name="judgment_date" value="${record.judgment_date || ''}">
+      </div>
 
-        <div class="form-group">
-          <label>Verdict/Décision</label>
-          <textarea name="verdict" placeholder="Résumé du verdict" required>${record?.verdict || ''}</textarea>
-        </div>
+      <div class="form-group">
+        <label>Qualification/Crime</label>
+        <select name="qualification" required>
+          <option value="">-- Sélectionner --</option>
+          <option value="Délit Mineur" ${record.qualification === 'Délit Mineur' ? 'selected' : ''}>Délit Mineur</option>
+          <option value="Délit Majeur" ${record.qualification === 'Délit Majeur' ? 'selected' : ''}>Délit Majeur</option>
+          <option value="Crime" ${record.qualification === 'Crime' ? 'selected' : ''}>Crime</option>
+          <option value="Infraction Administrative" ${record.qualification === 'Infraction Administrative' ? 'selected' : ''}>Infraction Administrative</option>
+        </select>
+      </div>
 
-        <div class="form-group">
-          <label>Statut</label>
-          <select name="status" required>
-            <option value="Nouveau" ${record?.status === 'Nouveau' ? 'selected' : ''}>Nouveau</option>
-            <option value="En cours" ${record?.status === 'En cours' ? 'selected' : ''}>En cours</option>
-            <option value="Clos" ${record?.status === 'Clos' ? 'selected' : ''}>Clos</option>
-            <option value="Suspendu" ${record?.status === 'Suspendu' ? 'selected' : ''}>Suspendu</option>
-          </select>
-        </div>
+      <div class="form-group">
+        <label>Montant de l'Amende</label>
+        <input type="number" name="fine_amount" value="${record.fine_amount || 0}" step="0.01" min="0">
+      </div>
 
-        <div class="form-group">
-          <label>Notes Additionnelles</label>
-          <textarea name="notes" placeholder="Observations">${record?.notes || ''}</textarea>
-        </div>
+      <div class="form-group">
+        <label>Sentence/Peine</label>
+        <textarea name="sentence" required>${record.sentence || ''}</textarea>
+      </div>
 
-        <div class="modal-buttons">
-          <button type="button" onclick="document.getElementById('judicial-modal').remove()" class="secondary-btn">Annuler</button>
-          <button type="submit" class="primary-btn">Enregistrer</button>
-        </div>
-      </form>
-    </div>
-  `;
+      <div class="form-group">
+        <label>Statut de la Sentence</label>
+        <select name="sentence_status" required>
+          <option value="Nouveau" ${record.sentence_status === 'Nouveau' ? 'selected' : ''}>Nouveau</option>
+          <option value="En cours" ${record.sentence_status === 'En cours' ? 'selected' : ''}>En cours</option>
+          <option value="Complétée" ${record.sentence_status === 'Complétée' ? 'selected' : ''}>Complétée</option>
+          <option value="Suspendue" ${record.sentence_status === 'Suspendue' ? 'selected' : ''}>Suspendue</option>
+        </select>
+      </div>
 
-  document.body.appendChild(modal);
+      <div class="form-group">
+        <label>Statut de l'Amende</label>
+        <select name="fine_status">
+          <option value="Non réglée" ${record.fine_status === 'Non réglée' ? 'selected' : ''}>Non réglée</option>
+          <option value="Partiellement réglée" ${record.fine_status === 'Partiellement réglée' ? 'selected' : ''}>Partiellement réglée</option>
+          <option value="Réglée" ${record.fine_status === 'Réglée' ? 'selected' : ''}>Réglée</option>
+        </select>
+      </div>
 
-  modal.querySelector('#temp-judicial-form').addEventListener('submit', async (e) => {
+      <div class="form-group">
+        <label>Référence du Jugement</label>
+        <input type="text" name="judgment_reference" value="${record.judgment_reference || ''}">
+      </div>
+
+      <div class="form-group">
+        <label>Lien du Jugement</label>
+        <input type="url" name="judgment_link" value="${record.judgment_link || ''}">
+      </div>
+
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea name="notes">${record.notes || ''}</textarea>
+      </div>
+
+      <div class="form-buttons">
+        <button type="submit" class="primary-btn">Enregistrer</button>
+        <button type="button" class="secondary-btn" onclick="closeModal()">Annuler</button>
+      </div>
+    </form>
+  `);
+
+  document.getElementById('temp-judicial-form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const formData = new FormData(modal.querySelector('#temp-judicial-form'));
-
-    const recordData = {
-      id: record?.id || null,
-      date: formData.get('date'),
+    const formData = new FormData(e.target);
+    const updatedRecord = {
+      id: record.id,
       reference: formData.get('reference'),
-      parties: formData.get('parties'),
-      type: formData.get('type'),
-      verdict: formData.get('verdict'),
-      status: formData.get('status'),
+      suspect: formData.get('suspect'),
+      magistrate: formData.get('magistrate'),
+      judgment_date: formData.get('judgment_date'),
+      qualification: formData.get('qualification'),
+      fine_amount: Number(formData.get('fine_amount')),
+      sentence: formData.get('sentence'),
+      sentence_status: formData.get('sentence_status'),
+      fine_status: formData.get('fine_status'),
+      judgment_reference: formData.get('judgment_reference'),
+      judgment_link: formData.get('judgment_link'),
       notes: formData.get('notes'),
-      archived: record?.archived || false,
-      createdAt: record?.createdAt || new Date().toISOString(),
     };
 
-    const success = await saveJudicialRecord(recordData);
-
+    const success = await saveJudicialRecord(updatedRecord);
     if (success) {
-      showMessage(elements.judicialMessage, '✅ Dossier enregistré avec succès.', 'success');
-      renderJudicialTable();
-      modal.remove();
+      closeModal();
+      showMessage(elements.judicialMessage, '✅ Enregistrement mis à jour', 'success');
+      filterJudicial();
     } else {
-      showMessage(elements.judicialMessage, '❌ Erreur lors de l\'enregistrement.', 'error');
+      showMessage(elements.judicialMessage, '❌ Erreur lors de la sauvegarde', 'error');
     }
   });
 }
 
 /**
- * Édite un dossier judiciaire
+ * Crée un nouvel enregistrement judiciaire
  */
-function editJudicial(id) {
-  const record = appState.judicialRecords.find(r => r.id === id);
-  if (record) {
-    showJudicialForm(record);
-  }
+async function newJudicial() {
+  showModal(`
+    <form id="temp-judicial-form">
+      <h3>Créer un Enregistrement Judiciaire</h3>
+
+      <div class="form-group">
+        <label>Référence</label>
+        <input type="text" name="reference" value="JUD-${new Date().getFullYear()}-" required>
+      </div>
+
+      <div class="form-group">
+        <label>Suspect/Accusé</label>
+        <input type="text" name="suspect" required>
+      </div>
+
+      <div class="form-group">
+        <label>Magistrat</label>
+        <input type="text" name="magistrate">
+      </div>
+
+      <div class="form-group">
+        <label>Date du Jugement</label>
+        <input type="date" name="judgment_date">
+      </div>
+
+      <div class="form-group">
+        <label>Qualification/Crime</label>
+        <select name="qualification" required>
+          <option value="">-- Sélectionner --</option>
+          <option value="Délit Mineur">Délit Mineur</option>
+          <option value="Délit Majeur">Délit Majeur</option>
+          <option value="Crime">Crime</option>
+          <option value="Infraction Administrative">Infraction Administrative</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Montant de l'Amende</label>
+        <input type="number" name="fine_amount" value="0" step="0.01" min="0">
+      </div>
+
+      <div class="form-group">
+        <label>Sentence/Peine</label>
+        <textarea name="sentence" required></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Statut de la Sentence</label>
+        <select name="sentence_status" required>
+          <option value="Nouveau" selected>Nouveau</option>
+          <option value="En cours">En cours</option>
+          <option value="Complétée">Complétée</option>
+          <option value="Suspendue">Suspendue</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Statut de l'Amende</label>
+        <select name="fine_status">
+          <option value="Non réglée" selected>Non réglée</option>
+          <option value="Partiellement réglée">Partiellement réglée</option>
+          <option value="Réglée">Réglée</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Référence du Jugement</label>
+        <input type="text" name="judgment_reference">
+      </div>
+
+      <div class="form-group">
+        <label>Lien du Jugement</label>
+        <input type="url" name="judgment_link">
+      </div>
+
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea name="notes"></textarea>
+      </div>
+
+      <div class="form-buttons">
+        <button type="submit" class="primary-btn">Créer</button>
+        <button type="button" class="secondary-btn" onclick="closeModal()">Annuler</button>
+      </div>
+    </form>
+  `);
+
+  document.getElementById('temp-judicial-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const newRecord = {
+      id: null,
+      reference: formData.get('reference'),
+      suspect: formData.get('suspect'),
+      magistrate: formData.get('magistrate'),
+      judgment_date: formData.get('judgment_date'),
+      qualification: formData.get('qualification'),
+      fine_amount: Number(formData.get('fine_amount')),
+      sentence: formData.get('sentence'),
+      sentence_status: formData.get('sentence_status'),
+      fine_status: formData.get('fine_status'),
+      judgment_reference: formData.get('judgment_reference'),
+      judgment_link: formData.get('judgment_link'),
+      notes: formData.get('notes'),
+    };
+
+    const success = await saveJudicialRecord(newRecord);
+    if (success) {
+      closeModal();
+      showMessage(elements.judicialMessage, '✅ Enregistrement créé', 'success');
+      filterJudicial();
+    } else {
+      showMessage(elements.judicialMessage, '❌ Erreur lors de la création', 'error');
+    }
+  });
 }
 
 /**
- * Confirme la suppression d'un dossier judiciaire
- */
-function deleteJudicialConfirm(id) {
-  if (confirm('Êtes-vous sûr de vouloir supprimer ce dossier ?')) {
-    deleteJudicial(id);
-    renderJudicialTable();
-    showMessage(elements.judicialMessage, '✅ Dossier supprimé.', 'success');
-  }
-}
-
-/**
- * Archive un dossier judiciaire
+ * Archive un enregistrement judiciaire
  */
 async function archiveJudicial(id) {
-  const record = appState.judicialRecords.find(r => r.id === id);
-  if (record) {
-    record.archived = true;
-    await saveJudicialRecord(record);
-    renderJudicialTable();
-    showMessage(elements.judicialMessage, '✅ Dossier archivé.', 'success');
+  if (!confirm('Êtes-vous sûr de vouloir archiver cet enregistrement ?')) return;
+
+  try {
+    const { error } = await supabaseClient
+      .from('judicial_records')
+      .update({ archived: true })
+      .eq('id', id);
+
+    if (error) throw error;
+
+    await loadAppData();
+    showMessage(elements.judicialMessage, '✅ Enregistrement archivé', 'success');
+    await logAction('Dossier Judiciaire', id, 'Archivage', 'Dossier archivé');
+    filterJudicial();
+  } catch (err) {
+    console.error('Erreur:', err);
+    showMessage(elements.judicialMessage, '❌ Erreur lors de l\'archivage', 'error');
   }
 }
 
 /**
- * Restaure un dossier judiciaire
+ * Demande confirmation avant suppression d'un enregistrement judiciaire
  */
-async function restoreJudicial(id) {
-  const record = appState.judicialRecords.find(r => r.id === id);
-  if (record) {
-    record.archived = false;
-    await saveJudicialRecord(record);
-    renderJudicialTable();
-    showMessage(elements.judicialMessage, '✅ Dossier restauré.', 'success');
+function deleteJudicialConfirm(id) {
+  if (confirm('Êtes-vous sûr de vouloir supprimer cet enregistrement ? Cette action est irréversible.')) {
+    deleteJudicial(id);
+    showMessage(elements.judicialMessage, '✅ Enregistrement supprimé', 'success');
+    filterJudicial();
   }
 }
 
-// ============================================
-// CERTIFICATIONS
-// ============================================
-
 /**
- * Affiche le formulaire de certification
+ * Édite une certification - ✅ CHAMPS CORRIGÉS
  */
-function showCertificationForm(cert = null) {
-  const modal = document.createElement('div');
-  modal.className = 'modal-overlay';
-  modal.id = 'certification-modal';
+async function editCertification(id) {
+  const cert = appState.certifications.find(c => c.id === id);
+  if (!cert) return;
 
-  modal.innerHTML = `
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2>${cert ? '✎ Modifier une Certification' : '➕ Nouvelle Certification'}</h2>
-        <button type="button" onclick="document.getElementById('certification-modal').remove()" class="close-btn">✕</button>
+  showModal(`
+    <form id="temp-certification-form">
+      <h3>Éditer une Certification</h3>
+
+      <div class="form-group">
+        <label>Référence</label>
+        <input type="text" name="reference" value="${cert.reference}" required>
       </div>
-      <form id="temp-certification-form">
-        <div class="form-group">
-          <label>Date</label>
-          <input type="date" name="date" value="${cert?.date || new Date().toISOString().split('T')[0]}" required>
-        </div>
 
-        <div class="form-group">
-          <label>Référence</label>
-          <input type="text" name="reference" value="${cert?.reference || ''}" placeholder="CERT-2026-XXXXX" required>
-        </div>
+      <div class="form-group">
+        <label>Nom du Candidat</label>
+        <input type="text" name="candidate_name" value="${cert.candidate_name || ''}" required>
+      </div>
 
-        <div class="form-group">
-          <label>Nom du Demandeur</label>
-          <input type="text" name="name" value="${cert?.name || ''}" placeholder="Nom complet" required>
-        </div>
+      <div class="form-group">
+        <label>Instructeur</label>
+        <input type="text" name="instructor" value="${cert.instructor || ''}">
+      </div>
 
-        <div class="form-group">
-          <label>Type de Certification</label>
-          <select name="type" required>
-            <option value="">-- Sélectionner --</option>
-            <option value="Authentification" ${cert?.type === 'Authentification' ? 'selected' : ''}>Authentification</option>
-            <option value="Conformité" ${cert?.type === 'Conformité' ? 'selected' : ''}>Conformité</option>
-            <option value="Légalisation" ${cert?.type === 'Légalisation' ? 'selected' : ''}>Légalisation</option>
-            <option value="Autre" ${cert?.type === 'Autre' ? 'selected' : ''}>Autre</option>
-          </select>
-        </div>
+      <div class="form-group">
+        <label>Date de Formation</label>
+        <input type="date" name="training_date" value="${cert.training_date || ''}">
+      </div>
 
-        <div class="form-group">
-          <label>Prix</label>
-          <input type="number" name="price" value="${cert?.price || appState.settings.certificationPrice || 50}" step="0.01" required>
-        </div>
+      <div class="form-group">
+        <label>Type de Formation</label>
+        <select name="training_type" required>
+          <option value="">-- Sélectionner --</option>
+          <option value="Juridique" ${cert.training_type === 'Juridique' ? 'selected' : ''}>Juridique</option>
+          <option value="Administrative" ${cert.training_type === 'Administrative' ? 'selected' : ''}>Administrative</option>
+          <option value="Technique" ${cert.training_type === 'Technique' ? 'selected' : ''}>Technique</option>
+          <option value="Autre" ${cert.training_type === 'Autre' ? 'selected' : ''}>Autre</option>
+        </select>
+      </div>
 
-        <div class="form-group">
-          <label>Statut</label>
-          <select name="status" required>
-            <option value="Nouveau" ${cert?.status === 'Nouveau' ? 'selected' : ''}>Nouveau</option>
-            <option value="En traitement" ${cert?.status === 'En traitement' ? 'selected' : ''}>En traitement</option>
-            <option value="Délivré" ${cert?.status === 'Délivré' ? 'selected' : ''}>Délivré</option>
-            <option value="Rejeté" ${cert?.status === 'Rejeté' ? 'selected' : ''}>Rejeté</option>
-          </select>
-        </div>
+      <div class="form-group">
+        <label>Montant</label>
+        <input type="number" name="amount" value="${cert.amount || 0}" step="0.01" min="0">
+      </div>
 
-        <div class="form-group">
-          <label>Observations</label>
-          <textarea name="notes" placeholder="Notes">${cert?.notes || ''}</textarea>
-        </div>
+      <div class="form-group">
+        <label>Statut du Paiement</label>
+        <select name="payment_status" required>
+          <option value="Non réglée" ${cert.payment_status === 'Non réglée' ? 'selected' : ''}>Non réglée</option>
+          <option value="Partiellement réglée" ${cert.payment_status === 'Partiellement réglée' ? 'selected' : ''}>Partiellement réglée</option>
+          <option value="Réglée" ${cert.payment_status === 'Réglée' ? 'selected' : ''}>Réglée</option>
+        </select>
+      </div>
 
-        <div class="modal-buttons">
-          <button type="button" onclick="document.getElementById('certification-modal').remove()" class="secondary-btn">Annuler</button>
-          <button type="submit" class="primary-btn">Enregistrer</button>
-        </div>
-      </form>
-    </div>
-  `;
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea name="notes">${cert.notes || ''}</textarea>
+      </div>
 
-  document.body.appendChild(modal);
+      <div class="form-buttons">
+        <button type="submit" class="primary-btn">Enregistrer</button>
+        <button type="button" class="secondary-btn" onclick="closeModal()">Annuler</button>
+      </div>
+    </form>
+  `);
 
-  modal.querySelector('#temp-certification-form').addEventListener('submit', async (e) => {
+  document.getElementById('temp-certification-form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const formData = new FormData(modal.querySelector('#temp-certification-form'));
-
-    const certData = {
-      id: cert?.id || null,
-      date: formData.get('date'),
+    const formData = new FormData(e.target);
+    const updatedCert = {
+      id: cert.id,
       reference: formData.get('reference'),
-      name: formData.get('name'),
-      type: formData.get('type'),
-      price: Number(formData.get('price')) || 0,
-      status: formData.get('status'),
+      candidate_name: formData.get('candidate_name'),
+      instructor: formData.get('instructor'),
+      training_date: formData.get('training_date'),
+      training_type: formData.get('training_type'),
+      amount: Number(formData.get('amount')),
+      payment_status: formData.get('payment_status'),
       notes: formData.get('notes'),
-      archived: cert?.archived || false,
-      createdAt: cert?.createdAt || new Date().toISOString(),
     };
 
-    const success = await saveCertification(certData);
-
+    const success = await saveCertification(updatedCert);
     if (success) {
-      showMessage(elements.certificationMessage, '✅ Certification enregistrée avec succès.', 'success');
-      renderCertificationTable();
-      modal.remove();
+      closeModal();
+      showMessage(elements.certificationMessage, '✅ Certification mise à jour', 'success');
+      filterCertification();
     } else {
-      showMessage(elements.certificationMessage, '❌ Erreur lors de l\'enregistrement.', 'error');
+      showMessage(elements.certificationMessage, '❌ Erreur lors de la sauvegarde', 'error');
     }
   });
 }
 
 /**
- * Édite une certification
+ * Crée une nouvelle certification
  */
-function editCertification(id) {
-  const cert = appState.certifications.find(c => c.id === id);
-  if (cert) {
-    showCertificationForm(cert);
-  }
-}
+async function newCertification() {
+  showModal(`
+    <form id="temp-certification-form">
+      <h3>Créer une Certification</h3>
 
-/**
- * Confirme la suppression d'une certification
- */
-function deleteCertificationConfirm(id) {
-  if (confirm('Êtes-vous sûr de vouloir supprimer cette certification ?')) {
-    deleteCertification(id);
-    renderCertificationTable();
-    showMessage(elements.certificationMessage, '✅ Certification supprimée.', 'success');
-  }
+      <div class="form-group">
+        <label>Référence</label>
+        <input type="text" name="reference" value="CERT-${new Date().getFullYear()}-" required>
+      </div>
+
+      <div class="form-group">
+        <label>Nom du Candidat</label>
+        <input type="text" name="candidate_name" required>
+      </div>
+
+      <div class="form-group">
+        <label>Instructeur</label>
+        <input type="text" name="instructor">
+      </div>
+
+      <div class="form-group">
+        <label>Date de Formation</label>
+        <input type="date" name="training_date">
+      </div>
+
+      <div class="form-group">
+        <label>Type de Formation</label>
+        <select name="training_type" required>
+          <option value="">-- Sélectionner --</option>
+          <option value="Juridique">Juridique</option>
+          <option value="Administrative">Administrative</option>
+          <option value="Technique">Technique</option>
+          <option value="Autre">Autre</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Montant</label>
+        <input type="number" name="amount" value="0" step="0.01" min="0">
+      </div>
+
+      <div class="form-group">
+        <label>Statut du Paiement</label>
+        <select name="payment_status" required>
+          <option value="Non réglée" selected>Non réglée</option>
+          <option value="Partiellement réglée">Partiellement réglée</option>
+          <option value="Réglée">Réglée</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea name="notes"></textarea>
+      </div>
+
+      <div class="form-buttons">
+        <button type="submit" class="primary-btn">Créer</button>
+        <button type="button" class="secondary-btn" onclick="closeModal()">Annuler</button>
+      </div>
+    </form>
+  `);
+
+  document.getElementById('temp-certification-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const newCert = {
+      id: null,
+      reference: formData.get('reference'),
+      candidate_name: formData.get('candidate_name'),
+      instructor: formData.get('instructor'),
+      training_date: formData.get('training_date'),
+      training_type: formData.get('training_type'),
+      amount: Number(formData.get('amount')),
+      payment_status: formData.get('payment_status'),
+      notes: formData.get('notes'),
+    };
+
+    const success = await saveCertification(newCert);
+    if (success) {
+      closeModal();
+      showMessage(elements.certificationMessage, '✅ Certification créée', 'success');
+      filterCertification();
+    } else {
+      showMessage(elements.certificationMessage, '❌ Erreur lors de la création', 'error');
+    }
+  });
 }
 
 /**
  * Archive une certification
  */
 async function archiveCertification(id) {
-  const cert = appState.certifications.find(c => c.id === id);
-  if (cert) {
-    cert.archived = true;
-    await saveCertification(cert);
-    renderCertificationTable();
-    showMessage(elements.certificationMessage, '✅ Certification archivée.', 'success');
+  if (!confirm('Êtes-vous sûr de vouloir archiver cette certification ?')) return;
+
+  try {
+    const { error } = await supabaseClient
+      .from('certifications')
+      .update({ archived: true })
+      .eq('id', id);
+
+    if (error) throw error;
+
+    await loadAppData();
+    showMessage(elements.certificationMessage, '✅ Certification archivée', 'success');
+    await logAction('Certification', id, 'Archivage', 'Certification archivée');
+    filterCertification();
+  } catch (err) {
+    console.error('Erreur:', err);
+    showMessage(elements.certificationMessage, '❌ Erreur lors de l\'archivage', 'error');
   }
 }
 
 /**
- * Restaure une certification
+ * Demande confirmation avant suppression d'une certification
  */
-async function restoreCertification(id) {
-  const cert = appState.certifications.find(c => c.id === id);
-  if (cert) {
-    cert.archived = false;
-    await saveCertification(cert);
-    renderCertificationTable();
-    showMessage(elements.certificationMessage, '✅ Certification restaurée.', 'success');
+function deleteCertificationConfirm(id) {
+  if (confirm('Êtes-vous sûr de vouloir supprimer cette certification ? Cette action est irréversible.')) {
+    deleteCertification(id);
+    showMessage(elements.certificationMessage, '✅ Certification supprimée', 'success');
+    filterCertification();
   }
 }
 
-// ============================================
-// REÇUS & PAIEMENTS
-// ============================================
-
 /**
- * Affiche le formulaire de reçu
+ * Édite un reçu - ✅ CHAMPS CORRIGÉS
  */
-function showReceiptForm(receipt = null) {
-  const modal = document.createElement('div');
-  modal.className = 'modal-overlay';
-  modal.id = 'receipt-modal';
+async function editReceipt(id) {
+  const receipt = appState.receipts.find(r => r.id === id);
+  if (!receipt) return;
 
-  modal.innerHTML = `
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2>${receipt ? '✎ Modifier un Reçu' : '➕ Nouveau Reçu'}</h2>
-        <button type="button" onclick="document.getElementById('receipt-modal').remove()" class="close-btn">✕</button>
+  showModal(`
+    <form id="temp-receipt-form">
+      <h3>Éditer un Reçu</h3>
+
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" name="date" value="${receipt.date}" required>
       </div>
-      <form id="temp-receipt-form">
-        <div class="form-group">
-          <label>Date</label>
-          <input type="date" name="date" value="${receipt?.date || new Date().toISOString().split('T')[0]}" required>
-        </div>
 
-        <div class="form-group">
-          <label>Type d'Enregistrement</label>
-          <select name="recordType" required onchange="updateReceiptRecordOptions()">
-            <option value="">-- Sélectionner --</option>
-            <option value="judicial" ${receipt?.recordType === 'judicial' ? 'selected' : ''}>Dossier Judiciaire</option>
-            <option value="certification" ${receipt?.recordType === 'certification' ? 'selected' : ''}>Certification</option>
-          </select>
-        </div>
+      <div class="form-group">
+        <label>Référence</label>
+        <input type="text" name="reference" value="${receipt.reference || ''}" required>
+      </div>
 
-        <div class="form-group">
-          <label>Enregistrement</label>
-          <select name="recordId" required>
-            <option value="">-- Sélectionner --</option>
-          </select>
-        </div>
+      <div class="form-group">
+        <label>Type de Dossier</label>
+        <input type="text" name="dossier_type" value="${receipt.dossier_type || ''}" required>
+      </div>
 
-        <div class="form-group">
-          <label>Collecteur</label>
-          <input type="text" name="collector" value="${receipt?.collector || ''}" placeholder="Nom du collecteur" required>
-        </div>
+      <div class="form-group">
+        <label>Titre du Dossier</label>
+        <input type="text" name="dossier_title" value="${receipt.dossier_title || ''}">
+      </div>
 
-        <div class="form-group">
-          <label>Montant Total (Or)</label>
-          <input type="number" name="amount" value="${receipt?.amount || 0}" step="0.01" required onchange="updateReceiptDistribution()">
-        </div>
+      <div class="form-group">
+        <label>Collecteur</label>
+        <input type="text" name="collector_name" value="${receipt.collector_name || ''}" required>
+      </div>
 
-        <div class="form-group">
-          <label>Pourcentage Trésor (%)</label>
-          <input type="number" name="treasuryPercent" value="${receipt?.treasuryPercent || appState.settings.judicialTreasuryPercentage || 70}" min="0" max="100" step="1" readonly>
-        </div>
+      <div class="form-group">
+        <label>Montant Total</label>
+        <input type="number" name="amount" value="${receipt.amount || 0}" step="0.01" min="0" required>
+      </div>
 
-        <div class="form-group">
-          <label>Montant Trésor</label>
-          <input type="text" name="treasuryAmount" value="${formatCurrency(receipt?.treasuryAmount || 0)}" readonly>
-        </div>
+      <div class="form-group">
+        <label>Méthode de Paiement</label>
+        <select name="method" required>
+          <option value="Espèces" ${receipt.method === 'Espèces' ? 'selected' : ''}>Espèces</option>
+          <option value="Chèque" ${receipt.method === 'Chèque' ? 'selected' : ''}>Chèque</option>
+          <option value="Virement" ${receipt.method === 'Virement' ? 'selected' : ''}>Virement</option>
+          <option value="Autre" ${receipt.method === 'Autre' ? 'selected' : ''}>Autre</option>
+        </select>
+      </div>
 
-        <div class="form-group">
-          <label>Montant Chancellerie</label>
-          <input type="text" name="chancelleryAmount" value="${formatCurrency(receipt?.chancelleryAmount || 0)}" readonly>
-        </div>
+      <div class="form-group">
+        <label>Pourcentage Trésor (%)</label>
+        <input type="number" name="treasury_percent" value="${receipt.treasury_percent || 60}" min="0" max="100" step="1">
+      </div>
 
-        <div class="form-group">
-          <label>Méthode de Paiement</label>
-          <select name="method" required>
-            <option value="">-- Sélectionner --</option>
-            <option value="Espèces" ${receipt?.method === 'Espèces' ? 'selected' : ''}>Espèces</option>
-            <option value="Chèque" ${receipt?.method === 'Chèque' ? 'selected' : ''}>Chèque</option>
-            <option value="Transfert" ${receipt?.method === 'Transfert' ? 'selected' : ''}>Transfert</option>
-          </select>
-        </div>
+      <div class="form-group">
+        <label>Pourcentage Chancellerie (%)</label>
+        <input type="number" name="chancellery_percent" value="${receipt.chancellery_percent || 40}" min="0" max="100" step="1">
+      </div>
 
-        <div class="form-group checkbox">
-          <input type="checkbox" name="treasuryTransferred" ${receipt?.treasuryTransferred ? 'checked' : ''}>
-          <label>Transféré au Trésor</label>
-        </div>
+      <div class="form-group">
+        <label>Montant Trésor</label>
+        <input type="number" name="treasury_amount" value="${receipt.treasury_amount || 0}" step="0.01" min="0" readonly>
+      </div>
 
-        <div class="form-group checkbox">
-          <input type="checkbox" name="chancelleryTransferred" ${receipt?.chancelleryTransferred ? 'checked' : ''}>
-          <label>Transféré à la Chancellerie</label>
-        </div>
+      <div class="form-group">
+        <label>Montant Chancellerie</label>
+        <input type="number" name="chancellery_amount" value="${receipt.chancellery_amount || 0}" step="0.01" min="0" readonly>
+      </div>
 
-        <div class="modal-buttons">
-          <button type="button" onclick="document.getElementById('receipt-modal').remove()" class="secondary-btn">Annuler</button>
-          <button type="submit" class="primary-btn">Enregistrer</button>
-        </div>
-      </form>
-    </div>
-  `;
+      <div class="form-group">
+        <label>
+          <input type="checkbox" name="treasury_transferred" ${receipt.treasury_transferred ? 'checked' : ''}>
+          Transféré au Trésor
+        </label>
+      </div>
 
-  document.body.appendChild(modal);
+      <div class="form-group">
+        <label>
+          <input type="checkbox" name="chancellery_transferred" ${receipt.chancellery_transferred ? 'checked' : ''}>
+          Transféré à la Chancellerie
+        </label>
+      </div>
 
-  updateReceiptRecordOptions();
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea name="notes">${receipt.notes || ''}</textarea>
+      </div>
 
-  modal.querySelector('#temp-receipt-form').addEventListener('submit', async (e) => {
+      <div class="form-buttons">
+        <button type="submit" class="primary-btn">Enregistrer</button>
+        <button type="button" class="secondary-btn" onclick="closeModal()">Annuler</button>
+      </div>
+    </form>
+  `);
+
+  document.getElementById('temp-receipt-form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const formData = new FormData(modal.querySelector('#temp-receipt-form'));
-
+    const formData = new FormData(e.target);
+    
     const amount = Number(formData.get('amount')) || 0;
-    const treasuryPercent = appState.settings.judicialTreasuryPercentage;
+    const treasuryPercent = Number(formData.get('treasury_percent')) || 60;
     const chancelleryPercent = 100 - treasuryPercent;
 
-    const receiptData = {
-      id: receipt?.id || null,
+    const updatedReceipt = {
+      id: receipt.id,
       date: formData.get('date'),
-      recordType: formData.get('recordType'),
-      recordId: formData.get('recordId'),
-      collector: formData.get('collector'),
+      reference: formData.get('reference'),
+      dossier_type: formData.get('dossier_type'),
+      dossier_title: formData.get('dossier_title'),
+      collector_name: formData.get('collector_name'),
       amount: amount,
-      treasuryPercent: treasuryPercent,
-      chancelleryPercent: chancelleryPercent,
-      treasuryAmount: (amount * treasuryPercent) / 100,
-      chancelleryAmount: (amount * chancelleryPercent) / 100,
       method: formData.get('method'),
-      treasuryTransferred: formData.get('treasuryTransferred') ? true : false,
-      chancelleryTransferred: formData.get('chancelleryTransferred') ? true : false,
-      paymentStatus: 'Enregistré',
-      reference: receipt?.reference || `RCP-${new Date().getFullYear()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
-      archived: receipt?.archived || false,
-      createdAt: receipt?.createdAt || new Date().toISOString(),
+      treasury_percent: treasuryPercent,
+      chancellery_percent: chancelleryPercent,
+      treasury_amount: (amount * treasuryPercent) / 100,
+      chancellery_amount: (amount * chancelleryPercent) / 100,
+      treasury_transferred: formData.get('treasury_transferred') ? true : false,
+      chancellery_transferred: formData.get('chancellery_transferred') ? true : false,
+      notes: formData.get('notes'),
     };
 
-    const success = await saveReceipt(receiptData);
-
+    const success = await saveReceipt(updatedReceipt);
     if (success) {
-      showMessage(elements.receiptMessage, '✅ Reçu enregistré avec succès.', 'success');
-      renderReceiptTable();
-      modal.remove();
+      closeModal();
+      showMessage(elements.receiptMessage, '✅ Reçu mis à jour', 'success');
+      filterReceipt();
     } else {
-      showMessage(elements.receiptMessage, '❌ Erreur lors de l\'enregistrement.', 'error');
+      showMessage(elements.receiptMessage, '❌ Erreur lors de la sauvegarde', 'error');
     }
   });
 }
 
 /**
- * Édite un reçu
+ * Crée un nouveau reçu
  */
-function editReceiptForm(id) {
-  const receipt = appState.receipts.find(r => r.id === id);
-  if (receipt) {
-    showReceiptForm(receipt);
-  }
+async function newReceipt() {
+  showModal(`
+    <form id="temp-receipt-form">
+      <h3>Créer un Reçu</h3>
+
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" name="date" value="${new Date().toISOString().split('T')[0]}" required>
+      </div>
+
+      <div class="form-group">
+        <label>Référence</label>
+        <input type="text" name="reference" value="RCP-${new Date().getFullYear()}-" required>
+      </div>
+
+      <div class="form-group">
+        <label>Type de Dossier</label>
+        <input type="text" name="dossier_type" required>
+      </div>
+
+      <div class="form-group">
+        <label>Titre du Dossier</label>
+        <input type="text" name="dossier_title">
+      </div>
+
+      <div class="form-group">
+        <label>Collecteur</label>
+        <input type="text" name="collector_name" required>
+      </div>
+
+      <div class="form-group">
+        <label>Montant Total</label>
+        <input type="number" name="amount" value="0" step="0.01" min="0" required>
+      </div>
+
+      <div class="form-group">
+        <label>Méthode de Paiement</label>
+        <select name="method" required>
+          <option value="Espèces" selected>Espèces</option>
+          <option value="Chèque">Chèque</option>
+          <option value="Virement">Virement</option>
+          <option value="Autre">Autre</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Pourcentage Trésor (%)</label>
+        <input type="number" name="treasury_percent" value="60" min="0" max="100" step="1">
+      </div>
+
+      <div class="form-group">
+        <label>Pourcentage Chancellerie (%)</label>
+        <input type="number" name="chancellery_percent" value="40" min="0" max="100" step="1" readonly>
+      </div>
+
+      <div class="form-group">
+        <label>Montant Trésor</label>
+        <input type="number" name="treasury_amount" value="0" step="0.01" min="0" readonly>
+      </div>
+
+      <div class="form-group">
+        <label>Montant Chancellerie</label>
+        <input type="number" name="chancellery_amount" value="0" step="0.01" min="0" readonly>
+      </div>
+
+      <div class="form-group">
+        <label>
+          <input type="checkbox" name="treasury_transferred">
+          Transféré au Trésor
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label>
+          <input type="checkbox" name="chancellery_transferred">
+          Transféré à la Chancellerie
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea name="notes"></textarea>
+      </div>
+
+      <div class="form-buttons">
+        <button type="submit" class="primary-btn">Créer</button>
+        <button type="button" class="secondary-btn" onclick="closeModal()">Annuler</button>
+      </div>
+    </form>
+  `);
+
+  document.getElementById('temp-receipt-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    
+    const amount = Number(formData.get('amount')) || 0;
+    const treasuryPercent = Number(formData.get('treasury_percent')) || 60;
+    const chancelleryPercent = 100 - treasuryPercent;
+
+    const newReceiptData = {
+      id: null,
+      date: formData.get('date'),
+      reference: formData.get('reference'),
+      dossier_type: formData.get('dossier_type'),
+      dossier_title: formData.get('dossier_title'),
+      collector_name: formData.get('collector_name'),
+      amount: amount,
+      method: formData.get('method'),
+      treasury_percent: treasuryPercent,
+      chancellery_percent: chancelleryPercent,
+      treasury_amount: (amount * treasuryPercent) / 100,
+      chancellery_amount: (amount * chancelleryPercent) / 100,
+      treasury_transferred: formData.get('treasury_transferred') ? true : false,
+      chancellery_transferred: formData.get('chancellery_transferred') ? true : false,
+      notes: formData.get('notes'),
+    };
+
+    const success = await saveReceipt(newReceiptData);
+    if (success) {
+      closeModal();
+      showMessage(elements.receiptMessage, '✅ Reçu créé', 'success');
+      filterReceipt();
+    } else {
+      showMessage(elements.receiptMessage, '❌ Erreur lors de la création', 'error');
+    }
+  });
 }
 
 /**
- * Met à jour les options d'enregistrement dans le formulaire reçu
- */
-function updateReceiptRecordOptions() {
-  const recordTypeSelect = document.querySelector('[name="recordType"]');
-  const recordIdSelect = document.querySelector('[name="recordId"]');
-
-  if (!recordTypeSelect || !recordIdSelect) return;
-
-  const recordType = recordTypeSelect.value;
-  recordIdSelect.innerHTML = '<option value="">-- Sélectionner --</option>';
-
-  if (recordType === 'judicial') {
-    appState.judicialRecords.forEach((record) => {
-      const option = document.createElement('option');
-      option.value = record.id;
-      option.textContent = `${record.reference} - ${record.parties}`;
-      recordIdSelect.appendChild(option);
-    });
-  } else if (recordType === 'certification') {
-    appState.certifications.forEach((cert) => {
-      const option = document.createElement('option');
-      option.value = cert.id;
-      option.textContent = `${cert.reference} - ${cert.name}`;
-      recordIdSelect.appendChild(option);
-    });
-  }
-}
-
-/**
- * Met à jour la répartition des montants dans le formulaire reçu
- */
-function updateReceiptDistribution() {
-  const amountInput = document.querySelector('[name="amount"]');
-  const treasuryPercentInput = document.querySelector('[name="treasuryPercent"]');
-  const treasuryAmountInput = document.querySelector('[name="treasuryAmount"]');
-  const chancelleryAmountInput = document.querySelector('[name="chancelleryAmount"]');
-
-  if (!amountInput || !treasuryPercentInput) return;
-
-  const amount = Number(amountInput.value) || 0;
-  const treasuryPercent = Number(treasuryPercentInput.value) || 70;
-  const chancelleryPercent = 100 - treasuryPercent;
-
-  const treasuryAmount = (amount * treasuryPercent) / 100;
-  const chancelleryAmount = (amount * chancelleryPercent) / 100;
-
-  if (treasuryAmountInput) treasuryAmountInput.value = formatCurrency(treasuryAmount);
-  if (chancelleryAmountInput) chancelleryAmountInput.value = formatCurrency(chancelleryAmount);
-}
-
-/**
- * Confirme la suppression d'un reçu
+ * Demande confirmation avant suppression d'un reçu
  */
 function deleteReceiptConfirm(id) {
-  if (confirm('Êtes-vous sûr de vouloir supprimer ce reçu ?')) {
+  if (confirm('Êtes-vous sûr de vouloir supprimer ce reçu ? Cette action est irréversible.')) {
     deleteReceipt(id);
-    renderReceiptTable();
-    showMessage(elements.receiptMessage, '✅ Reçu supprimé.', 'success');
+    showMessage(elements.receiptMessage, '✅ Reçu supprimé', 'success');
+    filterReceipt();
+  }
+}
+// ============================================
+// SAUVEGARDE DES DONNÉES - ✅ CHAMPS CORRIGÉS
+// ============================================
+
+/**
+ * Sauvegarde un enregistrement judiciaire - ✅ UTILISE 'judicial_records'
+ */
+async function saveJudicialRecord(record) {
+  try {
+    if (record.id) {
+      const { error } = await supabaseClient
+        .from('judicial_records')
+        .update({
+          reference: record.reference,
+          suspect: record.suspect,
+          magistrate: record.magistrate,
+          judgment_date: record.judgment_date,
+          qualification: record.qualification,
+          fine_amount: record.fine_amount,
+          sentence: record.sentence,
+          sentence_status: record.sentence_status,
+          fine_status: record.fine_status,
+          judgment_reference: record.judgment_reference,
+          judgment_link: record.judgment_link,
+          notes: record.notes,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', record.id);
+      if (error) throw error;
+    } else {
+      const { error } = await supabaseClient
+        .from('judicial_records')
+        .insert([{
+          reference: record.reference,
+          suspect: record.suspect,
+          magistrate: record.magistrate,
+          judgment_date: record.judgment_date,
+          qualification: record.qualification,
+          fine_amount: record.fine_amount,
+          sentence: record.sentence,
+          sentence_status: record.sentence_status,
+          fine_status: record.fine_status,
+          judgment_reference: record.judgment_reference,
+          judgment_link: record.judgment_link,
+          notes: record.notes,
+          created_by: appState.currentUser.id,
+          created_at: new Date().toISOString(),
+        }]);
+      if (error) throw error;
+    }
+
+    await loadAppData();
+    await logAction('Dossier Judiciaire', record.reference, record.id ? 'Modification' : 'Création', `Dossier : ${record.reference}`);
+    return true;
+  } catch (err) {
+    console.error('Erreur lors de la sauvegarde:', err);
+    return false;
   }
 }
 
 /**
- * Archive un reçu
+ * Supprime un enregistrement judiciaire
  */
-async function archiveReceipt(id) {
-  const receipt = appState.receipts.find(r => r.id === id);
-  if (receipt) {
-    receipt.archived = true;
-    await saveReceipt(receipt);
-    renderReceiptTable();
-    showMessage(elements.receiptMessage, '✅ Reçu archivé.', 'success');
+async function deleteJudicial(id) {
+  try {
+    const { error } = await supabaseClient
+      .from('judicial_records')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+
+    await loadAppData();
+    await logAction('Dossier Judiciaire', id, 'Suppression', 'Dossier supprimé');
+    return true;
+  } catch (err) {
+    console.error('Erreur lors de la suppression:', err);
+    return false;
   }
 }
 
 /**
- * Restaure un reçu
+ * Sauvegarde une certification - ✅ UTILISE 'certifications'
  */
-async function restoreReceipt(id) {
-  const receipt = appState.receipts.find(r => r.id === id);
-  if (receipt) {
-    receipt.archived = false;
-    await saveReceipt(receipt);
-    renderReceiptTable();
-    showMessage(elements.receiptMessage, '✅ Reçu restauré.', 'success');
+async function saveCertification(cert) {
+  try {
+    if (cert.id) {
+      const { error } = await supabaseClient
+        .from('certifications')
+        .update({
+          reference: cert.reference,
+          candidate_name: cert.candidate_name,
+          instructor: cert.instructor,
+          training_date: cert.training_date,
+          training_type: cert.training_type,
+          amount: cert.amount,
+          payment_status: cert.payment_status,
+          notes: cert.notes,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', cert.id);
+      if (error) throw error;
+    } else {
+      const { error } = await supabaseClient
+        .from('certifications')
+        .insert([{
+          reference: cert.reference,
+          candidate_name: cert.candidate_name,
+          instructor: cert.instructor,
+          training_date: cert.training_date,
+          training_type: cert.training_type,
+          amount: cert.amount,
+          payment_status: cert.payment_status,
+          notes: cert.notes,
+          created_by: appState.currentUser.id,
+          created_at: new Date().toISOString(),
+        }]);
+      if (error) throw error;
+    }
+
+    await loadAppData();
+    await logAction('Certification', cert.reference, cert.id ? 'Modification' : 'Création', `Certification : ${cert.reference}`);
+    return true;
+  } catch (err) {
+    console.error('Erreur lors de la sauvegarde:', err);
+    return false;
   }
 }
 
 /**
- * Bascule le statut de transfert au Trésor
+ * Supprime une certification
  */
-async function toggleTreasuryTransfer(id) {
-  const receipt = appState.receipts.find(r => r.id === id);
-  if (receipt) {
-    receipt.treasuryTransferred = !receipt.treasuryTransferred;
-    await saveReceipt(receipt);
-    renderReceiptTable();
-    showMessage(elements.receiptMessage, receipt.treasuryTransferred ? '✅ Transfert au Trésor confirmé.' : '✅ Transfert au Trésor annulé.', 'success');
+async function deleteCertification(id) {
+  try {
+    const { error } = await supabaseClient
+      .from('certifications')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+
+    await loadAppData();
+    await logAction('Certification', id, 'Suppression', 'Certification supprimée');
+    return true;
+  } catch (err) {
+    console.error('Erreur lors de la suppression:', err);
+    return false;
   }
 }
 
 /**
- * Bascule le statut de transfert à la Chancellerie
+ * Sauvegarde un reçu - ✅ UTILISE 'receipts'
  */
-async function toggleChancelleryTransfer(id) {
-  const receipt = appState.receipts.find(r => r.id === id);
-  if (receipt) {
-    receipt.chancelleryTransferred = !receipt.chancelleryTransferred;
-    await saveReceipt(receipt);
-    renderReceiptTable();
-    showMessage(elements.receiptMessage, receipt.chancelleryTransferred ? '✅ Transfert à la Chancellerie confirmé.' : '✅ Transfert à la Chancellerie annulé.', 'success');
+async function saveReceipt(receipt) {
+  try {
+    if (receipt.id) {
+      const { error } = await supabaseClient
+        .from('receipts')
+        .update({
+          date: receipt.date,
+          reference: receipt.reference,
+          dossier_type: receipt.dossier_type,
+          dossier_title: receipt.dossier_title,
+          collector_name: receipt.collector_name,
+          amount: receipt.amount,
+          method: receipt.method,
+          treasury_percent: receipt.treasury_percent,
+          chancellery_percent: receipt.chancellery_percent,
+          treasury_amount: receipt.treasury_amount,
+          chancellery_amount: receipt.chancellery_amount,
+          treasury_transferred: receipt.treasury_transferred,
+          chancellery_transferred: receipt.chancellery_transferred,
+          notes: receipt.notes,
+        })
+        .eq('id', receipt.id);
+      if (error) throw error;
+    } else {
+      const { error } = await supabaseClient
+        .from('receipts')
+        .insert([{
+          date: receipt.date,
+          reference: receipt.reference,
+          dossier_type: receipt.dossier_type,
+          dossier_title: receipt.dossier_title,
+          collector_name: receipt.collector_name,
+          amount: receipt.amount,
+          method: receipt.method,
+          treasury_percent: receipt.treasury_percent,
+          chancellery_percent: receipt.chancellery_percent,
+          treasury_amount: receipt.treasury_amount,
+          chancellery_amount: receipt.chancellery_amount,
+          treasury_transferred: receipt.treasury_transferred,
+          chancellery_transferred: receipt.chancellery_transferred,
+          notes: receipt.notes,
+          created_by: appState.currentUser.id,
+          created_at: new Date().toISOString(),
+        }]);
+      if (error) throw error;
+    }
+
+    await loadAppData();
+    await logAction('Reçu', receipt.reference, receipt.id ? 'Modification' : 'Création', `Reçu : ${receipt.reference}`);
+    return true;
+  } catch (err) {
+    console.error('Erreur lors de la sauvegarde:', err);
+    return false;
+  }
+}
+
+/**
+ * Supprime un reçu
+ */
+async function deleteReceipt(id) {
+  try {
+    const { error } = await supabaseClient
+      .from('receipts')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+
+    await loadAppData();
+    await logAction('Reçu', id, 'Suppression', 'Reçu supprimé');
+    return true;
+  } catch (err) {
+    console.error('Erreur lors de la suppression:', err);
+    return false;
   }
 }
 
 // ============================================
-// UTILISATEURS
+// CHARGEMENT DES DONNÉES
 // ============================================
 
 /**
- * Confirme l'approbation d'un utilisateur
+ * Charge toutes les données depuis Supabase - ✅ TABLES CORRIGÉES
  */
-function approveUserConfirm(userId) {
-  if (confirm('Approuver cet utilisateur ?')) {
-    approveUser(userId);
-    renderUsersTable();
-    showMessage(elements.usersTableBody?.parentElement?.querySelector('.form-success') || document.createElement('div'), '✅ Utilisateur approuvé.', 'success');
+async function loadAppData() {
+  if (!appState.currentUser) {
+    console.log('❌ Pas d\'utilisateur connecté');
+    return;
   }
-}
 
-/**
- * Confirme la suppression d'un utilisateur
- */
-function deleteUserConfirm(userId) {
-  if (confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) {
-    deleteUser(userId);
-    renderUsersTable();
+  console.log('📊 Chargement des données pour:', appState.currentUser.name, 'ID:', appState.currentUser.id);
+
+  try {
+    // Charger les enregistrements judiciaires
+    const { data: judicial, error: judicialError } = await supabaseClient
+      .from('judicial_records')
+      .select('*');
+
+    if (judicialError) throw judicialError;
+    appState.judicialRecords = judicial || [];
+    console.log('✅ Enregistrements judiciaires chargés:', appState.judicialRecords.length);
+
+    // Charger les certifications
+    const { data: certifications, error: certificationsError } = await supabaseClient
+      .from('certifications')
+      .select('*');
+
+    if (certificationsError) throw certificationsError;
+    appState.certifications = certifications || [];
+    console.log('✅ Certifications chargées:', appState.certifications.length);
+
+    // Charger les reçus
+    const { data: receipts, error: receiptsError } = await supabaseClient
+      .from('receipts')
+      .select('*');
+
+    if (receiptsError) throw receiptsError;
+    appState.receipts = receipts || [];
+    console.log('✅ Reçus chargés:', appState.receipts.length);
+
+    // Charger les profils (admin seulement) - ✅ UTILISE 'profiles'
+    if (isAdmin()) {
+      const { data: profiles, error: profilesError } = await supabaseClient
+        .from('profiles')
+        .select('*');
+
+      if (profilesError) throw profilesError;
+      appState.profiles = profiles || [];
+      console.log('✅ Profils chargés:', appState.profiles.length);
+    }
+
+    // Charger le journal
+    const { data: journal, error: journalError } = await supabaseClient
+      .from('modification_journal')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (journalError) throw journalError;
+    appState.journal = journal || [];
+    console.log('✅ Journal chargé:', appState.journal.length);
+
+    // Charger les paramètres - ✅ UTILISE 'app_settings'
+    const { data: settings, error: settingsError } = await supabaseClient
+      .from('app_settings')
+      .select('*')
+      .eq('id', 1)
+      .single();
+
+    if (!settingsError && settings) {
+      appState.settings = settings;
+      console.log('✅ Paramètres chargés');
+    }
+
+    renderDashboard();
+  } catch (err) {
+    console.error('❌ Erreur lors du chargement:', err);
   }
 }
 
 // ============================================
-// FILTRES & RECHERCHE
+// FILTRAGE ET RECHERCHE
 // ============================================
-
-/**
- * Initialise les filtres
- */
-function initFilters() {
-  // Filtres Judiciaires
-  if (elements.judicialFilter) {
-    elements.judicialFilter.addEventListener('input', filterJudicial);
-  }
-  if (elements.judicialStatusFilter) {
-    elements.judicialStatusFilter.addEventListener('change', filterJudicial);
-  }
-  if (elements.judicialDateFrom) {
-    elements.judicialDateFrom.addEventListener('change', filterJudicial);
-  }
-  if (elements.judicialDateTo) {
-    elements.judicialDateTo.addEventListener('change', filterJudicial);
-  }
-  if (elements.resetJudicialFilters) {
-    elements.resetJudicialFilters.addEventListener('click', resetDataFilters);
-  }
-
-  // Filtres Certifications
-  if (elements.certificationFilter) {
-    elements.certificationFilter.addEventListener('input', filterCertification);
-  }
-  if (elements.certificationStatusFilter) {
-    elements.certificationStatusFilter.addEventListener('change', filterCertification);
-  }
-  if (elements.certificationDateFrom) {
-    elements.certificationDateFrom.addEventListener('change', filterCertification);
-  }
-  if (elements.certificationDateTo) {
-    elements.certificationDateTo.addEventListener('change', filterCertification);
-  }
-  if (elements.resetCertificationFilters) {
-    elements.resetCertificationFilters.addEventListener('click', resetDataFilters);
-  }
-
-  // Filtres Reçus
-  if (elements.receiptFilter) {
-    elements.receiptFilter.addEventListener('input', filterReceipt);
-  }
-  if (elements.receiptStatusFilter) {
-    elements.receiptStatusFilter.addEventListener('change', filterReceipt);
-  }
-  if (elements.receiptDateFrom) {
-    elements.receiptDateFrom.addEventListener('change', filterReceipt);
-  }
-  if (elements.receiptDateTo) {
-    elements.receiptDateTo.addEventListener('change', filterReceipt);
-  }
-  if (elements.resetReceiptFilters) {
-    elements.resetReceiptFilters.addEventListener('click', resetDataFilters);
-  }
-
-  // Filtres Journal
-  if (elements.journalFilter) {
-    elements.journalFilter.addEventListener('input', filterJournal);
-  }
-  if (elements.journalDateFrom) {
-    elements.journalDateFrom.addEventListener('change', filterJournal);
-  }
-  if (elements.journalDateTo) {
-    elements.journalDateTo.addEventListener('change', filterJournal);
-  }
-  if (elements.resetJournalFilters) {
-    elements.resetJournalFilters.addEventListener('click', resetDataFilters);
-  }
-}
 
 /**
  * Filtre les enregistrements judiciaires
@@ -1550,14 +1818,27 @@ function filterJudicial() {
   const dateFrom = elements.judicialDateFrom?.value || '';
   const dateTo = elements.judicialDateTo?.value || '';
 
-  const filtered = appState.judicialRecords.filter((record) => {
-    const matchesSearch = !searchTerm || record.reference?.toLowerCase().includes(searchTerm) || record.parties?.toLowerCase().includes(searchTerm);
-    const matchesStatus = !statusFilter || record.status === statusFilter;
-    const matchesDateFrom = !dateFrom || new Date(record.date) >= new Date(dateFrom);
-    const matchesDateTo = !dateTo || new Date(record.date) <= new Date(dateTo);
+  let filtered = appState.judicialRecords.filter(r => !r.archived);
 
-    return matchesSearch && matchesStatus && matchesDateFrom && matchesDateTo;
-  });
+  if (searchTerm) {
+    filtered = filtered.filter(r =>
+      (r.reference?.toLowerCase().includes(searchTerm)) ||
+      (r.suspect?.toLowerCase().includes(searchTerm)) ||
+      (r.magistrate?.toLowerCase().includes(searchTerm))
+    );
+  }
+
+  if (statusFilter) {
+    filtered = filtered.filter(r => r.sentence_status === statusFilter);
+  }
+
+  if (dateFrom) {
+    filtered = filtered.filter(r => new Date(r.judgment_date) >= new Date(dateFrom));
+  }
+
+  if (dateTo) {
+    filtered = filtered.filter(r => new Date(r.judgment_date) <= new Date(dateTo));
+  }
 
   renderJudicialTable(filtered);
 }
@@ -1571,14 +1852,27 @@ function filterCertification() {
   const dateFrom = elements.certificationDateFrom?.value || '';
   const dateTo = elements.certificationDateTo?.value || '';
 
-  const filtered = appState.certifications.filter((cert) => {
-    const matchesSearch = !searchTerm || cert.reference?.toLowerCase().includes(searchTerm) || cert.name?.toLowerCase().includes(searchTerm);
-    const matchesStatus = !statusFilter || cert.status === statusFilter;
-    const matchesDateFrom = !dateFrom || new Date(cert.date) >= new Date(dateFrom);
-    const matchesDateTo = !dateTo || new Date(cert.date) <= new Date(dateTo);
+  let filtered = appState.certifications.filter(c => !c.archived);
 
-    return matchesSearch && matchesStatus && matchesDateFrom && matchesDateTo;
-  });
+  if (searchTerm) {
+    filtered = filtered.filter(c =>
+      (c.reference?.toLowerCase().includes(searchTerm)) ||
+      (c.candidate_name?.toLowerCase().includes(searchTerm)) ||
+      (c.instructor?.toLowerCase().includes(searchTerm))
+    );
+  }
+
+  if (statusFilter) {
+    filtered = filtered.filter(c => c.payment_status === statusFilter);
+  }
+
+  if (dateFrom) {
+    filtered = filtered.filter(c => new Date(c.training_date) >= new Date(dateFrom));
+  }
+
+  if (dateTo) {
+    filtered = filtered.filter(c => new Date(c.training_date) <= new Date(dateTo));
+  }
 
   renderCertificationTable(filtered);
 }
@@ -1592,14 +1886,27 @@ function filterReceipt() {
   const dateFrom = elements.receiptDateFrom?.value || '';
   const dateTo = elements.receiptDateTo?.value || '';
 
-  const filtered = appState.receipts.filter((receipt) => {
-    const matchesSearch = !searchTerm || receipt.reference?.toLowerCase().includes(searchTerm) || receipt.collector?.toLowerCase().includes(searchTerm);
-    const matchesStatus = !statusFilter || receipt.paymentStatus === statusFilter;
-    const matchesDateFrom = !dateFrom || new Date(receipt.date) >= new Date(dateFrom);
-    const matchesDateTo = !dateTo || new Date(receipt.date) <= new Date(dateTo);
+  let filtered = appState.receipts;
 
-    return matchesSearch && matchesStatus && matchesDateFrom && matchesDateTo;
-  });
+  if (searchTerm) {
+    filtered = filtered.filter(r =>
+      (r.reference?.toLowerCase().includes(searchTerm)) ||
+      (r.dossier_type?.toLowerCase().includes(searchTerm)) ||
+      (r.collector_name?.toLowerCase().includes(searchTerm))
+    );
+  }
+
+  if (statusFilter) {
+    filtered = filtered.filter(r => r.method === statusFilter);
+  }
+
+  if (dateFrom) {
+    filtered = filtered.filter(r => new Date(r.date) >= new Date(dateFrom));
+  }
+
+  if (dateTo) {
+    filtered = filtered.filter(r => new Date(r.date) <= new Date(dateTo));
+  }
 
   renderReceiptTable(filtered);
 }
@@ -1612,23 +1919,200 @@ function filterJournal() {
   const dateFrom = elements.journalDateFrom?.value || '';
   const dateTo = elements.journalDateTo?.value || '';
 
-  const filtered = appState.journal.filter((entry) => {
-    const matchesSearch = !searchTerm || entry.description?.toLowerCase().includes(searchTerm) || entry.userName?.toLowerCase().includes(searchTerm);
-    const matchesDateFrom = !dateFrom || new Date(entry.created_at) >= new Date(dateFrom);
-    const matchesDateTo = !dateTo || new Date(entry.created_at) <= new Date(dateTo);
+  let filtered = appState.journal;
 
-    return matchesSearch && matchesDateFrom && matchesDateTo;
-  });
+  if (searchTerm) {
+    filtered = filtered.filter(j =>
+      (j.actor_name?.toLowerCase().includes(searchTerm)) ||
+      (j.action?.toLowerCase().includes(searchTerm)) ||
+      (j.description?.toLowerCase().includes(searchTerm))
+    );
+  }
+
+  if (dateFrom) {
+    filtered = filtered.filter(j => new Date(j.created_at) >= new Date(dateFrom));
+  }
+
+  if (dateTo) {
+    filtered = filtered.filter(j => new Date(j.created_at) <= new Date(dateTo));
+  }
 
   renderJournalTable(filtered);
+}
+
+// ============================================
+// UTILITAIRES - FORMATAGE
+// ============================================
+
+/**
+ * Formate une date en DD/MM/YYYY
+ */
+function formatDate(dateStr) {
+  if (!dateStr) return 'N/A';
+  try {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('fr-FR', dateOptions);
+  } catch {
+    return 'N/A';
+  }
+}
+
+/**
+ * Formate une devise en Septims
+ */
+function formatCurrency(amount) {
+  if (!amount && amount !== 0) return '0 Septims';
+  return new Intl.NumberFormat('fr-FR', {
+    style: 'currency',
+    currency: 'EUR',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount).replace('€', 'Septims');
+}
+
+// ============================================
+// DASHBOARD
+// ============================================
+
+/**
+ * Rend le tableau de bord - ✅ STATISTIQUES CORRIGÉES
+ */
+function renderDashboard() {
+  if (!elements.dashboardContainer) return;
+
+  const judicialCount = appState.judicialRecords.filter(r => !r.archived).length;
+  const certificationCount = appState.certifications.filter(c => !c.archived).length;
+  const totalReceipts = appState.receipts.reduce((sum, r) => sum + (r.amount || 0), 0);
+  const treasuryTotal = appState.receipts.reduce((sum, r) => sum + (r.treasury_amount || 0), 0);
+  const chancelleryTotal = appState.receipts.reduce((sum, r) => sum + (r.chancellery_amount || 0), 0);
+
+  elements.dashboardContainer.innerHTML = `
+    <div class="dashboard-header">
+      <h2>📋 Tableau de Bord</h2>
+      <p>Bienvenue, ${appState.currentUser?.name || 'Utilisateur'}</p>
+    </div>
+
+    <div class="dashboard-stats">
+      <div class="stat-card">
+        <h3>📁 Dossiers Judiciaires</h3>
+        <p class="stat-number">${judicialCount}</p>
+        <a href="#" data-section="judicial" class="stat-link">Voir les dossiers</a>
+      </div>
+
+      <div class="stat-card">
+        <h3>📜 Certifications</h3>
+        <p class="stat-number">${certificationCount}</p>
+        <a href="#" data-section="certification" class="stat-link">Voir les certifications</a>
+      </div>
+
+      <div class="stat-card">
+        <h3>💰 Total Reçus</h3>
+        <p class="stat-number">${formatCurrency(totalReceipts)}</p>
+        <a href="#" data-section="payments" class="stat-link">Voir les reçus</a>
+      </div>
+
+      <div class="stat-card">
+        <h3>🏛️ Trésor Impérial</h3>
+        <p class="stat-number">${formatCurrency(treasuryTotal)}</p>
+      </div>
+
+      <div class="stat-card">
+        <h3>📚 Chancellerie</h3>
+        <p class="stat-number">${formatCurrency(chancelleryTotal)}</p>
+      </div>
+
+      <div class="stat-card">
+        <h3>👥 Utilisateurs</h3>
+        <p class="stat-number">${isAdmin() ? appState.profiles.filter(p => p.status === 'Approuvé').length : 'N/A'}</p>
+        ${isAdmin() ? '<a href="#" data-section="users" class="stat-link">Gérer les utilisateurs</a>' : ''}
+      </div>
+    </div>
+
+    <div class="dashboard-recent">
+      <h3>📝 Dernières Actions</h3>
+      <table class="dashboard-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Acteur</th>
+            <th>Action</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${appState.journal.slice(0, 10).map(entry => `
+            <tr>
+              <td>${formatDate(entry.created_at)}</td>
+              <td>${entry.actor_name || 'Système'}</td>
+              <td>${entry.action || 'N/A'}</td>
+              <td>${entry.description || 'N/A'}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  // Ajouter les event listeners pour la navigation
+  document.querySelectorAll('[data-section]').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const section = link.getAttribute('data-section');
+      showSection(section);
+    });
+  });
+}
+
+// ============================================
+// SECTIONS
+// ============================================
+
+/**
+ * Affiche une section
+ */
+function showSection(sectionName) {
+  appState.activeSection = sectionName;
+
+  // Masquer toutes les sections
+  document.querySelectorAll('.section-content').forEach(section => {
+    section.style.display = 'none';
+  });
+
+  // Retirer la classe active de tous les boutons
+  document.querySelectorAll('[data-section]').forEach(btn => {
+    btn.classList.remove('active');
+  });
+
+  // Afficher la section sélectionnée
+  const activeElement = document.getElementById(`${sectionName}-section`);
+  if (activeElement) {
+    activeElement.style.display = 'block';
+  }
+
+  // Activer le bouton de navigation correspondant
+  document.querySelector(`[data-section="${sectionName}"]`)?.classList.add('active');
+
+  // Initialiser le contenu de la section
+  if (sectionName === 'judicial') {
+    filterJudicial();
+  } else if (sectionName === 'certification') {
+    filterCertification();
+  } else if (sectionName === 'payments') {
+    filterReceipt();
+  } else if (sectionName === 'journal') {
+    filterJournal();
+  } else if (sectionName === 'users') {
+    renderPendingUsersTable();
+    renderApprovedUsersTable();
+  } else if (sectionName === 'settings') {
+    renderSettings();
+  }
 }
 
 /**
  * Réinitialise les filtres
  */
-function resetDataFilters(e) {
-  const section = e.target.closest('[id$="-section"]')?.id || '';
-
+function resetFilters(section) {
   if (section.includes('judicial')) {
     if (elements.judicialFilter) elements.judicialFilter.value = '';
     if (elements.judicialStatusFilter) elements.judicialStatusFilter.value = '';
@@ -1656,76 +2140,11 @@ function resetDataFilters(e) {
 }
 
 // ============================================
-// GESTION DES SECTIONS
-// ============================================
-
-/**
- * Change la section active
- */
-function setSection(sectionName) {
-  appState.activeSection = sectionName;
-
-  // Masquer toutes les sections
-  document.querySelectorAll('[id$="-section"]').forEach((section) => {
-    section.style.display = 'none';
-  });
-
-  // Désactiver les boutons de navigation
-  elements.navSections.forEach((btn) => {
-    btn.classList.remove('active');
-  });
-
-  // Afficher la section active
-  let activeElement = null;
-  switch (sectionName) {
-    case 'dashboard':
-      activeElement = elements.dashboardSection;
-      renderDashboard();
-      break;
-    case 'judicial':
-      activeElement = elements.judicialSection;
-      renderJudicialTable();
-      break;
-    case 'certification':
-      activeElement = elements.certificationSection;
-      renderCertificationTable();
-      break;
-    case 'payments':
-      activeElement = elements.paymentsSection;
-      renderReceiptTable();
-      break;
-    case 'users':
-      if (isAdmin()) {
-        activeElement = elements.usersSection;
-        renderUsersTable();
-      }
-      break;
-    case 'journal':
-      activeElement = elements.journalSection;
-      renderJournalTable();
-      break;
-    case 'settings':
-      if (isAdmin()) {
-        activeElement = elements.settingsSection;
-        renderSettings();
-      }
-      break;
-  }
-
-  if (activeElement) {
-    activeElement.style.display = 'block';
-  }
-
-  // Activer le bouton de navigation correspondant
-  document.querySelector(`[data-section="${sectionName}"]`)?.classList.add('active');
-}
-
-// ============================================
 // SETTINGS
 // ============================================
 
 /**
- * Rend et initialise la section settings
+ * Rend la section des paramètres
  */
 function renderSettings() {
   if (!elements.settingsForm) return;
@@ -1740,172 +2159,165 @@ function renderSettings() {
       </div>
 
       <div class="form-group">
-        <label>Pourcentage Trésor (%)</label>
-        <input type="number" id="settings-treasury-percent" value="${appState.settings.judicialTreasuryPercentage || 70}" min="0" max="100" step="1">
-      </div>
-
-      <div class="form-group">
-        <label>Prix par Défaut des Certifications (Or)</label>
-        <input type="number" id="settings-cert-price" value="${appState.settings.certificationPrice || 50}" step="0.01">
+        <label>Année</label>
+        <input type="text" id="settings-year" value="${appState.settings.year || new Date().getFullYear()}" placeholder="Année">
       </div>
 
       <div class="form-buttons">
-        <button type="button" onclick="saveSettingsForm()" class="primary-btn">Enregistrer</button>
+        <button type="button" onclick="saveSettingsForm()" class="primary-btn">✅ Enregistrer</button>
       </div>
     </div>
   `;
 }
 
+// ============================================
+// GESTION DES MODALES
+// ============================================
+
 /**
- * Sauvegarde les paramètres
+ * Affiche une modale
  */
-async function saveSettingsForm() {
-  const institution = document.getElementById('settings-institution')?.value || '';
-  const treasuryPercent = Number(document.getElementById('settings-treasury-percent')?.value) || 70;
-  const certPrice = Number(document.getElementById('settings-cert-price')?.value) || 50;
+function showModal(content) {
+  let modal = document.getElementById('global-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'global-modal';
+    modal.className = 'modal';
+    document.body.appendChild(modal);
+  }
 
-  const settings = {
-    institution,
-    judicialTreasuryPercentage: treasuryPercent,
-    certificationPrice: certPrice,
-  };
+  modal.innerHTML = `
+    <div class="modal-content">
+      <button type="button" class="modal-close" onclick="closeModal()">✕</button>
+      ${content}
+    </div>
+  `;
 
-  const success = await saveSettings(settings);
+  modal.style.display = 'flex';
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal();
+  });
+}
 
-  if (success) {
-    showMessage(elements.settingsMessage || document.createElement('div'), '✅ Paramètres enregistrés avec succès.', 'success');
-  } else {
-    showMessage(elements.settingsMessage || document.createElement('div'), '❌ Erreur lors de l\'enregistrement.', 'error');
+/**
+ * Ferme la modale
+ */
+function closeModal() {
+  const modal = document.getElementById('global-modal');
+  if (modal) {
+    modal.style.display = 'none';
   }
 }
 
 // ============================================
-// INITIALISATION
+// UTILITAIRES DE PERMISSION
 // ============================================
 
 /**
- * Initialise la navigation
+ * Vérifie si l'utilisateur est administrateur
  */
-function initNav() {
-  elements.navSections.forEach((btn) => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      const section = btn.getAttribute('data-section');
-      setSection(section);
-    });
+function isAdmin() {
+  return appState.currentUser?.role === 'Administrateur';
+}
+
+/**
+ * Vérifie si l'utilisateur peut éditer
+ */
+function canEdit() {
+  return ['Administrateur', 'Scribe', 'Magistrat'].includes(appState.currentUser?.role);
+}
+
+/**
+ * Vérifie si l'utilisateur peut approuver
+ */
+function canApprove() {
+  return isAdmin();
+}
+
+// ============================================
+// ÉVÉNEMENTS ET INITIALISATIONS
+// ============================================
+
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('🚀 Application Chancellerie Impériale initialisée');
+  
+  // Écouter les changements d'authentification
+  supabaseClient.auth.onAuthStateChange(async (event, session) => {
+    if (session) {
+      appState.currentUser = session.user;
+      appState.isAuthenticated = true;
+      console.log('✅ Utilisateur connecté:', session.user.email);
+      
+      // Charger le profil complet
+      const { data: profile } = await supabaseClient
+        .from('profiles')
+        .select('*')
+        .eq('id', session.user.id)
+        .single();
+      
+      if (profile) {
+        appState.currentUser = { ...appState.currentUser, ...profile };
+        console.log('✅ Profil chargé:', profile.name);
+      }
+      
+      await loadAppData();
+      showSection('dashboard');
+    } else {
+      appState.isAuthenticated = false;
+      appState.currentUser = null;
+      console.log('❌ Utilisateur déconnecté');
+    }
   });
 
-  if (elements.logoutButton) {
-    elements.logoutButton.addEventListener('click', logoutUser);
+  // Ajouter les écouteurs d'événements
+  if (elements.registerButton) {
+    elements.registerButton.addEventListener('click', registerUser);
   }
-}
 
-/**
- * Initialise les formulaires
- */
-function initForms() {
-  // Judicial Form
   if (elements.judicialForm) {
     elements.judicialForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      showJudicialForm();
+      newJudicial();
     });
   }
 
-  // Certification Form
   if (elements.certificationForm) {
     elements.certificationForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      showCertificationForm();
+      newCertification();
     });
   }
 
-  // Receipt Form
   if (elements.receiptForm) {
     elements.receiptForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      showReceiptForm();
+      newReceipt();
     });
   }
 
-  // Login
-  if (elements.loginButton) {
-    elements.loginButton.addEventListener('click', loginUser);
-    elements.loginEmail.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') loginUser();
-    });
-    elements.loginPassword.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') loginUser();
-    });
-  }
+  // Filtres
+  if (elements.judicialFilter) elements.judicialFilter.addEventListener('input', filterJudicial);
+  if (elements.judicialStatusFilter) elements.judicialStatusFilter.addEventListener('change', filterJudicial);
+  if (elements.judicialDateFrom) elements.judicialDateFrom.addEventListener('change', filterJudicial);
+  if (elements.judicialDateTo) elements.judicialDateTo.addEventListener('change', filterJudicial);
+  if (elements.resetJudicialFilters) elements.resetJudicialFilters.addEventListener('click', () => resetFilters('judicial'));
 
-  // Register
-  if (elements.registerButton) {
-    elements.registerButton.addEventListener('click', registerUser);
-    elements.registerEmail.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') registerUser();
-    });
-    elements.registerPassword.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') registerUser();
-    });
-  }
-}
+  if (elements.certificationFilter) elements.certificationFilter.addEventListener('input', filterCertification);
+  if (elements.certificationStatusFilter) elements.certificationStatusFilter.addEventListener('change', filterCertification);
+  if (elements.certificationDateFrom) elements.certificationDateFrom.addEventListener('change', filterCertification);
+  if (elements.certificationDateTo) elements.certificationDateTo.addEventListener('change', filterCertification);
+  if (elements.resetCertificationFilters) elements.resetCertificationFilters.addEventListener('click', () => resetFilters('certification'));
 
-// ============================================
-// GESTION DE L'AUTHENTIFICATION SUPABASE
-// ============================================
+  if (elements.receiptFilter) elements.receiptFilter.addEventListener('input', filterReceipt);
+  if (elements.receiptStatusFilter) elements.receiptStatusFilter.addEventListener('change', filterReceipt);
+  if (elements.receiptDateFrom) elements.receiptDateFrom.addEventListener('change', filterReceipt);
+  if (elements.receiptDateTo) elements.receiptDateTo.addEventListener('change', filterReceipt);
+  if (elements.resetReceiptFilters) elements.resetReceiptFilters.addEventListener('click', () => resetFilters('payments'));
 
-let unsubscribeAuth = null;
+  if (elements.journalFilter) elements.journalFilter.addEventListener('input', filterJournal);
+  if (elements.journalDateFrom) elements.journalDateFrom.addEventListener('change', filterJournal);
+  if (elements.journalDateTo) elements.journalDateTo.addEventListener('change', filterJournal);
+  if (elements.resetJournalFilters) elements.resetJournalFilters.addEventListener('click', () => resetFilters('journal'));
 
-async function initializeAuth() {
-  // S'abonner aux changements d'authentification Supabase
-  unsubscribeAuth = supabaseClient.auth.onAuthStateChange(async (event, session) => {
-    console.log('Auth event:', event, 'Session:', session?.user?.email);
-
-    if (session && session.user) {
-      // ✅ Utilisateur connecté
-      const user = session.user;
-      appState.currentUser = {
-        id: user.id,
-        email: user.email,
-        name: user.user_metadata?.name || user.email,
-        role: user.user_metadata?.role || 'greffier',
-        approved: user.user_metadata?.approved || false,
-      };
-
-      appState.isAuthenticated = true;
-      console.log('User logged in:', appState.currentUser.name);
-      
-      await loadAppData();
-      showAppScreen();
-    } else {
-      // ❌ Utilisateur déconnecté
-      console.log('User logged out');
-      appState.currentUser = null;
-      appState.isAuthenticated = false;
-      appState.judicialRecords = [];
-      appState.certifications = [];
-      appState.receipts = [];
-      appState.journal = [];
-      showAuthScreen();
-    }
-  });
-}
-
-// Initialiser l'authentification au chargement
-document.addEventListener('DOMContentLoaded', async () => {
-  await initializeAuth();
-  initForms();
-  initFilters();
+  console.log('✅ Tous les écouteurs d\'événements sont en place');
 });
-
-// Nettoyer le listener à la déconnexion
-window.addEventListener('beforeunload', () => {
-  if (unsubscribeAuth) {
-    unsubscribeAuth();
-  }
-});
-
-// ============================================
-// FIN BLOC 2
-// ============================================
