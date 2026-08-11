@@ -320,7 +320,7 @@ async function loadAppData() {
   .select('*')
   .order('createdAt', { ascending: false });
 
-    if (certError) throw certError;
+    if (certificationsError) throw certificationsError;
     appState.certifications = certifications || [];
 
     // Charger les reçus
@@ -329,7 +329,7 @@ async function loadAppData() {
   .select('*')
   .order('createdAt', { ascending: false });
 
-    if (receiptError) throw receiptError;
+    if (receiptsError) throw receiptsError;
     appState.receipts = receipts || [];
 
     // Charger les utilisateurs (admin seulement)
@@ -351,7 +351,7 @@ async function loadAppData() {
 
     if (journalError) throw journalError;
     appState.journal = journal || [];
-
+    
     // Charger les settings
     const { data: settings, error: settingsError } = await supabaseClient
       .from('settings')
