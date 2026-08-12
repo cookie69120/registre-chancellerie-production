@@ -2365,7 +2365,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Ajouter les écouteurs d'événements
+  // ============================================
+  // Écouteurs d'événements - Formulaires
+  // ============================================
   if (elements.registerButton) {
     elements.registerButton.addEventListener('click', registerUser);
   }
@@ -2391,7 +2393,47 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Filtres
+  // ============================================
+  // Écouteurs d'événements - Navigation Auth
+  // ============================================
+  const showRegisterBtn = document.getElementById('show-register');
+  const showLoginBtn = document.getElementById('show-login');
+  const loginForm = document.getElementById('login-form');
+  const registerForm = document.getElementById('register-form');
+
+  if (showRegisterBtn) {
+    showRegisterBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      document.getElementById('login-screen').classList.add('hidden');
+      document.getElementById('register-screen').classList.remove('hidden');
+    });
+  }
+
+  if (showLoginBtn) {
+    showLoginBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      document.getElementById('register-screen').classList.add('hidden');
+      document.getElementById('login-screen').classList.remove('hidden');
+    });
+  }
+
+  if (loginForm) {
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await loginUser();
+    });
+  }
+
+  if (registerForm) {
+    registerForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await registerUser();
+    });
+  }
+
+  // ============================================
+  // Écouteurs d'événements - Filtres
+  // ============================================
   if (elements.judicialFilter) elements.judicialFilter.addEventListener('input', filterJudicial);
   if (elements.judicialStatusFilter) elements.judicialStatusFilter.addEventListener('change', filterJudicial);
   if (elements.judicialDateFrom) elements.judicialDateFrom.addEventListener('change', filterJudicial);
