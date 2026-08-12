@@ -43,6 +43,12 @@ const elements = {
   registerRole: document.getElementById('register-role'),
   registerButton: document.getElementById('register-btn'),
   registerMessage: document.getElementById('register-message'),
+  // Authentification - CONNEXION
+loginForm: document.getElementById('login-form'),
+loginEmail: document.getElementById('login-email'),
+loginPassword: document.getElementById('login-password'),
+loginError: document.getElementById('login-error'),
+showRegisterLink: document.getElementById('show-register'),
 
   // Formulaires
   judicialForm: document.getElementById('judicial-form'),
