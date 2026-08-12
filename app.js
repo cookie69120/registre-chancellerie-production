@@ -237,79 +237,81 @@ async function logoutUser() {
  * Charge toutes les données de l'app
  */
 async function loadAppData() {
-  console.log('📊 Chargement des données pour:', appState.currentUser.name, 'ID:', appState.currentUser.id);
-
   try {
+    // ✅ VÉRIFICATION 1: Y a-t-il un utilisateur connecté ?
+    if (!appState.currentUser?.id) {
+      console.warn('⚠️ Aucun utilisateur connecté');
+      return; // On arrête ici si pas d'utilisateur
+    }
+
+    console.log('📦 Chargement des données pour:', appState.currentUser.email);
+
     // Charger les enregistrements judiciaires
     const { data: judicial, error: judicialError } = await supabaseClient
       .from('judicial_records')
-      .select('*');
+      .select('*')
+      .order('createdAt', { ascending: false });
 
-    if (judicialError) throw judicialError;
-    appState.judicialRecords = judicial || [];
+    // ✅ VÉRIFICATION 2: Y a-t-il une erreur ?
+    if (judicialError) {
+      console.warn('⚠️ Erreur chargement judiciaires:', judicialError.message);
+    } else {
+      appState.judicialRecords = judicial || [];
+      appState.counters.judicial = appState.judicialRecords.length;
+      console.log('✅ Judiciaires chargés:', appState.judicialRecords.length);
+    }
 
     // Charger les certifications
-    const { data: certifications, error: certificationsError } = await supabaseClient
+    const { data: certs, error: certsError } = await supabaseClient
       .from('certifications')
-      .select('*');
+      .select('*')
+      .order('createdAt', { ascending: false });
 
-    if (certificationsError) throw certificationsError;
-    appState.certifications = certifications || [];
+    if (certsError) {
+      console.warn('⚠️ Erreur chargement certifications:', certsError.message);
+    } else {
+      appState.certifications = certs || [];
+      appState.counters.certifications = appState.certifications.length;
+      console.log('✅ Certifications chargées:', appState.certifications.length);
+    }
 
     // Charger les reçus
     const { data: receipts, error: receiptsError } = await supabaseClient
       .from('receipts')
-      .select('*');
+      .select('*')
+      .order('createdAt', { ascending: false });
 
-    if (receiptsError) throw receiptsError;
-    appState.receipts = receipts || [];
-
-    // Charger les utilisateurs (admin seulement) - ✅ UTILISE 'profiles'
-    if (isAdmin()) {
-      const { data: profiles, error: profilesError } = await supabaseClient
-        .from('profiles')
-        .select('*');
-
-      if (profilesError) throw profilesError;
-      appState.profiles = profiles || [];
+    if (receiptsError) {
+      console.warn('⚠️ Erreur chargement reçus:', receiptsError.message);
+    } else {
+      appState.receipts = receipts || [];
+      appState.counters.receipts = appState.receipts.length;
+      console.log('✅ Reçus chargés:', appState.receipts.length);
     }
 
-    // Charger le journal - ✅ BON NOM: 'modification_journal'
+    // Charger le journal
     const { data: journal, error: journalError } = await supabaseClient
-      .from('modification_journal')
+      .from('journal')
       .select('*')
-      .order('created_at', { ascending: false });
+      .order('timestamp', { ascending: false });
 
-    if (journalError) throw journalError;
-    appState.journal = journal || [];
-
-    // Charger les settings - ✅ UTILISE 'app_settings'
-    const { data: settings, error: settingsError } = await supabaseClient
-      .from('app_settings')
-      .select('*')
-      .eq('id', 1)
-      .single();
-
-    if (settingsError && settingsError.code !== 'PGRST116') {
-      throw settingsError;
+    if (journalError) {
+      console.warn('⚠️ Erreur chargement journal:', journalError.message);
+    } else {
+      appState.journal = journal || [];
+      appState.counters.journal = appState.journal.length;
+      console.log('✅ Journal chargé:', appState.journal.length);
     }
 
-    appState.settings = settings || {
-      id: 1,
-      institution: 'Chancellerie Impériale',
-      certification_display: 'Certification Impériale',
-      year: new Date().getFullYear().toString(),
-      currency: 'Septims'
-    };
+    // Actualiser les tableaux
+    displayJudicial();
+    displayCertification();
+    displayReceipt();
+    displayJournal();
+    updateCounters();
 
-    // Mettre à jour les compteurs
-    appState.counters.judicial = appState.judicialRecords.filter(r => !r.archived).length;
-    appState.counters.certification = appState.certifications.filter(r => !r.archived).length;
-
-    console.log('✅ Données chargées avec succès');
-    renderDashboard();
   } catch (err) {
-    console.error('❌ Erreur lors du chargement des données:', err);
+    console.error('❌ Erreur générale loadAppData:', err);
   }
 }
 
@@ -2352,12 +2354,14 @@ document.addEventListener('DOMContentLoaded', () => {
         .single();
       
       if (profile) {
-        appState.currentUser = { ...appState.currentUser, ...profile };
-        console.log('✅ Profil chargé:', profile.name);
-      }
-      
+      appState.currentUser = { ...appState.currentUser, ...profile };
+      console.log('✅ Profil chargé:', profile.name);
       await loadAppData();
       showSection('dashboard');
+    } else {
+  console.warn('⚠️ Profil non trouvé pour cet utilisateur');
+  appState.isAuthenticated = false;
+}
     } else {
       appState.isAuthenticated = false;
       appState.currentUser = null;
