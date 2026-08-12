@@ -167,6 +167,12 @@ async function loginUser() {
       return;
     }
 
+    // ✅ VÉRIFICATION: data et data.user existent bien
+    if (!data || !data.user) {
+      showMessage(elements.loginMessage, '❌ Erreur d\'authentification', 'error');
+      return;
+    }
+
     // ✅ Charge le profil depuis 'profiles'
     const { data: profile, error: profileError } = await supabaseClient
       .from('profiles')
@@ -174,7 +180,17 @@ async function loginUser() {
       .eq('id', data.user.id)
       .single();
 
-    if (profileError) throw profileError;
+    if (profileError) {
+      console.error('Erreur profil:', profileError);
+      showMessage(elements.loginMessage, '❌ Profil non trouvé', 'error');
+      return;
+    }
+
+    // ✅ VÉRIFICATION: profile existe
+    if (!profile) {
+      showMessage(elements.loginMessage, '❌ Profil non trouvé', 'error');
+      return;
+    }
 
     if (profile.status === 'En attente d\'habilitation') {
       showMessage(elements.loginMessage, '⏳ Votre compte est en attente d\'approbation', 'error');
@@ -189,6 +205,7 @@ async function loginUser() {
       .eq('email', email)
       .single();
 
+    // ✅ VÉRIFICATION: userRole peut être null (pas grave)
     appState.currentUser = {
       ...profile,
       role: userRole?.role || 'user'  // ✅ Ajoute le rôle
@@ -198,8 +215,13 @@ async function loginUser() {
     console.log('✅ Connecté:', appState.currentUser.name, 'Rôle:', appState.currentUser.role);
     showMessage(elements.loginMessage, `✅ Bienvenue ${profile.name}!`, 'success');
     elements.loginForm.reset();
-    await loadAppData();
-    showAuthSection('authenticated');
+    
+    // Petite pause avant de charger les données
+    setTimeout(async () => {
+      await loadAppData();
+      showAuthSection('authenticated');
+    }, 500);
+
   } catch (err) {
     console.error('Erreur de connexion:', err);
     showMessage(elements.loginMessage, `❌ Erreur : ${err.message}`, 'error');
