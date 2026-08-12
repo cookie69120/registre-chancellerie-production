@@ -132,40 +132,46 @@ function showMessage(element, message, type) {
  * Enregistrer un nouvel utilisateur
  */
 async function registerUser() {
-  const email = elements.registerEmail.value.trim();
-  const password = elements.registerPassword.value.trim();
-  const name = elements.registerName.value.trim();
-  const role = elements.registerRole.value;
+  const name = document.getElementById('register-name').value.trim();
+  const email = document.getElementById('register-email').value.trim();
+  const password = document.getElementById('register-password').value.trim();
+  const role = document.getElementById('register-role').value;
 
-  if (!email || !password || !name || !role) {
+  if (!name || !email || !password || !role) {
     showMessage(elements.registerMessage, '❌ Tous les champs sont obligatoires', 'error');
     return;
   }
 
   try {
+    // 1️⃣ Créer l'utilisateur Supabase
     const { data, error } = await supabaseClient.auth.signUp({
       email,
       password,
-      options: {
-        data: { name, role },
-      },
     });
 
-    if (error) {
-      showMessage(elements.registerMessage, `❌ Erreur : ${error.message}`, 'error');
-      return;
-    }
+    if (error) throw error;
 
-    // ✅ CHANGÉ: Crée un profil dans 'profiles' au lieu de 'users'
+    // 2️⃣ Créer son profil dans la table 'profiles'
     const { error: profileError } = await supabaseClient
       .from('profiles')
       .insert([{
         id: data.user.id,
-        name,
-        email,
-        role,
+        name: name,
+        email: email,
+        role: role,
         status: 'En attente d\'habilitation'
       }]);
+
+    if (profileError) throw profileError;
+
+    showMessage(elements.registerMessage, '✅ Inscription réussie !', 'success');
+    document.getElementById('register-form').reset();
+
+  } catch (err) {
+    console.error('Erreur :', err);
+    showMessage(elements.registerMessage, `❌ Erreur : ${err.message}`, 'error');
+  }
+}
 
     if (profileError) throw profileError;
 
