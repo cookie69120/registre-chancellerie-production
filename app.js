@@ -2408,27 +2408,33 @@ document.addEventListener('DOMContentLoaded', () => {
       console.log('✅ Utilisateur connecté:', session.user.email);
       
       // Charger le profil complet
-      const { data: profile } = await supabaseClient
+      const { data: profile, error } = await supabaseClient
         .from('profiles')
         .select('*')
         .eq('id', session.user.id)
         .single();
       
+      if (error) {
+        console.error('❌ Erreur profil:', error.message);
+        return;
+      }
+
       if (profile) {
-      appState.currentUser = { ...appState.currentUser, ...profile };
-      console.log('✅ Profil chargé:', profile.name);
-      await loadAppData();
-      showSection('dashboard');
-    } else {
-  console.warn('⚠️ Profil non trouvé pour cet utilisateur');
-  appState.isAuthenticated = false;
-}
+        appState.currentUser = { ...appState.currentUser, ...profile };
+        console.log('✅ Profil chargé:', profile.name);
+        await loadAppData();
+        showSection('dashboard');
+      } else {
+        console.warn('⚠️ Profil non trouvé pour cet utilisateur');
+        appState.isAuthenticated = false;
+      }
     } else {
       appState.isAuthenticated = false;
       appState.currentUser = null;
       console.log('❌ Utilisateur déconnecté');
     }
   });
+});
 
   // ============================================
   // Écouteurs d'événements - Formulaires
