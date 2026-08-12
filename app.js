@@ -49,6 +49,7 @@ loginEmail: document.getElementById('login-email'),
 loginPassword: document.getElementById('login-password'),
 loginError: document.getElementById('login-error'),
 showRegisterLink: document.getElementById('show-register'),
+  loginUser: document.getElementById('login-user'),
 
   // Formulaires
   judicialForm: document.getElementById('judicial-form'),
