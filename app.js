@@ -205,16 +205,36 @@ async function loginUser() {
 
     // ✅ Charge le profil depuis 'profiles'
     const { data: profile, error: profileError } = await supabaseClient
-      .from('profiles')
-      .select('*')
-      .eq('id', data.user.id)
-      .single();
+  .from('profiles')
+  .select('*')
+  .eq('id', data.user.id)
+  .maybeSingle();
 
-    if (profileError) {
-      console.error('Erreur profil:', profileError);
-      showMessage(elements.loginMessage, '❌ Profil non trouvé', 'error');
-      return;
-    }
+if (profileError) {
+  console.error('❌ Erreur profil:', profileError);
+
+  showMessage(
+    elements.loginMessage,
+    `❌ Impossible de charger votre profil : ${profileError.message}`,
+    'error'
+  );
+
+  await supabaseClient.auth.signOut();
+  return;
+}
+
+if (!profile) {
+  console.error('❌ Aucun profil trouvé pour :', data.user.id);
+
+  showMessage(
+    elements.loginMessage,
+    '❌ Votre profil Chancellerie est introuvable.',
+    'error'
+  );
+
+  await supabaseClient.auth.signOut();
+  return;
+}
 
     // ✅ VÉRIFICATION: profile existe
     if (!profile) {
@@ -2070,7 +2090,7 @@ document.addEventListener('DOMContentLoaded', () => {
         .from('profiles')
         .select('*')
         .eq('id', session.user.id)
-        .single();
+        .maybeSingle();
       
       if (error) {
         console.error('❌ Erreur profil:', error.message);
