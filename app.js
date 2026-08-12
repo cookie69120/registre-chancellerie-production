@@ -172,17 +172,6 @@ async function registerUser() {
     showMessage(elements.registerMessage, `❌ Erreur : ${err.message}`, 'error');
   }
 }
-
-    if (profileError) throw profileError;
-
-    showMessage(elements.registerMessage, '✅ Inscription réussie. En attente d\'approbation.', 'success');
-    elements.registerForm.reset();
-  } catch (err) {
-    console.error('Erreur d\'enregistrement:', err);
-    showMessage(elements.registerMessage, `❌ Erreur : ${err.message}`, 'error');
-  }
-}
-
 /**
  * Connexion d'un utilisateur
  */
