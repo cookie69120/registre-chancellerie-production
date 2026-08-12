@@ -253,7 +253,7 @@ if (!profile) {
       .from('user_roles')
       .select('role')
       .eq('email', email)
-      .single();
+      .maybesingle();
 
     // ✅ VÉRIFICATION: userRole peut être null (pas grave)
     appState.currentUser = {
@@ -1911,25 +1911,32 @@ function showSection(sectionName) {
   appState.activeSection = sectionName;
 
   // Masquer toutes les sections
-  document.querySelectorAll('.section-content').forEach(section => {
+  document.querySelectorAll('.content-section').forEach(section => {
     section.style.display = 'none';
+    section.classList.remove('active');
   });
 
-  // Retirer la classe active de tous les boutons
+  // Retirer la classe active des boutons
   document.querySelectorAll('[data-section]').forEach(btn => {
     btn.classList.remove('active');
   });
 
   // Afficher la section sélectionnée
-  const activeElement = document.getElementById(`${sectionName}-section`);
+  const activeElement = document.getElementById(sectionName);
+
   if (activeElement) {
     activeElement.style.display = 'block';
+    activeElement.classList.add('active');
+  } else {
+    console.error(`❌ Section introuvable : ${sectionName}`);
   }
 
-  // Activer le bouton de navigation correspondant
-  document.querySelector(`[data-section="${sectionName}"]`)?.classList.add('active');
+  // Activer le bouton correspondant
+  document
+    .querySelector(`[data-section="${sectionName}"]`)
+    ?.classList.add('active');
 
-  // Initialiser le contenu de la section
+  // Initialiser le contenu
   if (sectionName === 'judicial') {
     filterJudicial();
   } else if (sectionName === 'certification') {
