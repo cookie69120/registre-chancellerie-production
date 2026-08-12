@@ -97,6 +97,33 @@ showRegisterLink: document.getElementById('show-register'),
   dashboardContainer: document.getElementById('dashboard-section'),
   settingsMessage: document.getElementById('settings-message'),
 };
+
+// ============================================
+// FONCTION UTILITAIRE - AFFICHAGE DES MESSAGES
+// ============================================
+
+/**
+ * Affiche un message temporaire
+ * @param {HTMLElement} element - L'élément où afficher le message
+ * @param {string} message - Le texte du message
+ * @param {string} type - 'success' ou 'error'
+ */
+function showMessage(element, message, type) {
+  if (!element) {
+    console.warn('⚠️ Élément message non trouvé');
+    return;
+  }
+
+  element.textContent = message;
+  element.className = `form-${type}`;
+  element.style.display = 'block';
+
+  // Masquer le message après 5 secondes
+  setTimeout(() => {
+    element.style.display = 'none';
+  }, 5000);
+}
+
 // ============================================
 // AUTHENTIFICATION SUPABASE
 // ============================================
