@@ -14,323 +14,210 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
 });
 
 // ============================================
-// VARIABLES GLOBALES
+// ÉTAT GLOBAL
 // ============================================
-const storageKey = 'imperialChancellerieData';
-const dateOptions = { year: 'numeric', month: '2-digit', day: '2-digit' };
-
 const appState = {
-  profiles: [],  // ✅ CHANGÉ: 'users' → 'profiles'
+  isAuthenticated: false,
+  currentUser: null,
+  profiles: [],
   judicialRecords: [],
   certifications: [],
   receipts: [],
   journal: [],
   settings: {},
-  counters: { judicial: 0, certification: 0, receipts: 0, journal: 0 },
-  currentUser: null,
-  activeSection: 'dashboard',
-  isAuthenticated: false,
+  counters: {
+    judicial: 0,
+    certification: 0,
+    receipts: 0,
+    journal: 0
+  },
+  activeSection: 'dashboard'
 };
 
 // ============================================
-// RÉFÉRENCES AUX ÉLÉMENTS DU DOM
+// RÉFÉRENCES DOM
 // ============================================
 const elements = {
-  // Authentification
-  registerEmail: document.getElementById('register-email'),
-  registerPassword: document.getElementById('register-password'),
-  registerName: document.getElementById('register-name'),
-  registerRole: document.getElementById('register-role'),
-  registerButton: document.getElementById('register-btn'),
-  registerMessage: document.getElementById('register-message'),
-  // Authentification - CONNEXION
-loginForm: document.getElementById('login-form'),
-loginEmail: document.getElementById('login-email'),
-loginPassword: document.getElementById('login-password'),
-loginError: document.getElementById('login-error'),
-showRegisterLink: document.getElementById('show-register'),
-
+  // Messages
+  judicialMessage: document.getElementById('judicial-message'),
+  certificationMessage: document.getElementById('certification-message'),
+  receiptMessage: document.getElementById('receipt-message'),
+  settingsMessage: document.getElementById('settings-message'),
+  
+  // Conteneurs
+  dashboardContainer: document.getElementById('dashboard-container'),
+  judicialTableBody: document.getElementById('judicial-table-body'),
+  certificationTableBody: document.getElementById('certification-table-body'),
+  receiptTableBody: document.getElementById('receipt-table-body'),
+  journalTableBody: document.getElementById('journal-table-body'),
+  pendingUsersTableBody: document.getElementById('pending-users-table-body'),
+  approvedUsersTableBody: document.getElementById('approved-users-table-body'),
+  
   // Formulaires
   judicialForm: document.getElementById('judicial-form'),
   certificationForm: document.getElementById('certification-form'),
   receiptForm: document.getElementById('receipt-form'),
   settingsForm: document.getElementById('settings-form'),
-
-  // Tableaux
-  judicialTableBody: document.getElementById('judicial-table-body'),
-  certificationTableBody: document.getElementById('certification-table-body'),
-  receiptTableBody: document.getElementById('receipt-table-body'),
-  journalTableBody: document.getElementById('journal-table-body'),
-
-  // Filtres Judiciaires
+  
+  // Filtres judiciaires
   judicialFilter: document.getElementById('judicial-filter'),
   judicialStatusFilter: document.getElementById('judicial-status-filter'),
   judicialDateFrom: document.getElementById('judicial-date-from'),
   judicialDateTo: document.getElementById('judicial-date-to'),
   resetJudicialFilters: document.getElementById('reset-judicial-filters'),
-  judicialMessage: document.getElementById('judicial-message'),
-
-  // Filtres Certifications
+  
+  // Filtres certifications
   certificationFilter: document.getElementById('certification-filter'),
   certificationStatusFilter: document.getElementById('certification-status-filter'),
   certificationDateFrom: document.getElementById('certification-date-from'),
   certificationDateTo: document.getElementById('certification-date-to'),
   resetCertificationFilters: document.getElementById('reset-certification-filters'),
-  certificationMessage: document.getElementById('certification-message'),
-
-  // Filtres Reçus
+  
+  // Filtres reçus
   receiptFilter: document.getElementById('receipt-filter'),
   receiptStatusFilter: document.getElementById('receipt-status-filter'),
   receiptDateFrom: document.getElementById('receipt-date-from'),
   receiptDateTo: document.getElementById('receipt-date-to'),
   resetReceiptFilters: document.getElementById('reset-receipt-filters'),
-  receiptMessage: document.getElementById('receipt-message'),
-
-  // Filtres Journal
+  
+  // Filtres journal
   journalFilter: document.getElementById('journal-filter'),
   journalDateFrom: document.getElementById('journal-date-from'),
   journalDateTo: document.getElementById('journal-date-to'),
   resetJournalFilters: document.getElementById('reset-journal-filters'),
-  journalMessage: document.getElementById('journal-message'),
-
-  // Sections
-  dashboardContainer: document.getElementById('dashboard-section'),
-  settingsMessage: document.getElementById('settings-message'),
-  pendingUsersTableBody: document.getElementById('pending-users-table-body'),
-  usersTableBody: document.getElementById('users-table-body'),
+  
+  // Boutons
+  registerButton: document.getElementById('register-button'),
+  logoutButton: document.getElementById('logout-button')
 };
 
 // ============================================
-// FONCTION UTILITAIRE - AFFICHAGE DES MESSAGES
+// OPTIONS DE FORMATAGE
+// ============================================
+const dateOptions = {
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit'
+};
+
+// ============================================
+// AUTHENTIFICATION
 // ============================================
 
 /**
- * Affiche un message temporaire
- * @param {HTMLElement} element - L'élément où afficher le message
- * @param {string} message - Le texte du message
- * @param {string} type - 'success' ou 'error'
- */
-function showMessage(element, message, type) {
-  if (!element) {
-    console.warn('⚠️ Élément message non trouvé');
-    return;
-  }
-
-  element.textContent = message;
-  element.className = `form-${type}`;
-  element.style.display = 'block';
-
-  // Masquer le message après 5 secondes
-  setTimeout(() => {
-    element.style.display = 'none';
-  }, 5000);
-}
-
-// ============================================
-// AUTHENTIFICATION SUPABASE
-// ============================================
-
-/**
- * Enregistrer un nouvel utilisateur
+ * Inscrit un nouvel utilisateur
  */
 async function registerUser() {
-  const name = document.getElementById('register-name').value.trim();
-  const email = document.getElementById('register-email').value.trim();
-  const password = document.getElementById('register-password').value.trim();
-  const role = document.getElementById('register-role').value;
-
-  if (!name || !email || !password || !role) {
-    showMessage(elements.registerMessage, '❌ Tous les champs sont obligatoires', 'error');
-    return;
-  }
-
   try {
-    // 1️⃣ Créer l'utilisateur Supabase
-    const { data, error } = await supabaseClient.auth.signUp({
+    const name = document.getElementById('register-name')?.value.trim();
+    const email = document.getElementById('register-email')?.value.trim();
+    const password = document.getElementById('register-password')?.value;
+    const role = document.getElementById('register-role')?.value || 'Utilisateur';
+
+    if (!name || !email || !password) {
+      showMessage(document.getElementById('register-message'), '❌ Tous les champs sont requis', 'error');
+      return;
+    }
+
+    // Créer le compte auth
+    const { data: authData, error: authError } = await supabaseClient.auth.signUp({
       email,
       password,
+      options: {
+        data: { name, role }
+      }
     });
 
-    if (error) throw error;
+    if (authError) throw authError;
 
-    // 2️⃣ Créer son profil dans la table 'profiles'
+    // Créer le profil (en attente d'approbation)
     const { error: profileError } = await supabaseClient
       .from('profiles')
       .insert([{
-        id: data.user.id,
-        name: name,
-        email: email,
-        role: role,
-        status: 'En attente d\'habilitation'
+        id: authData.user.id,
+        name,
+        email,
+        role,
+        status: 'En attente',
+        created_at: new Date().toISOString()
       }]);
 
     if (profileError) throw profileError;
 
-    showMessage(elements.registerMessage, '✅ Inscription réussie !', 'success');
-    document.getElementById('register-form').reset();
+    showMessage(document.getElementById('register-message'), '✅ Compte créé. En attente d\'approbation.', 'success');
+    
+    // Basculer vers login
+    setTimeout(() => {
+      document.getElementById('register-screen')?.classList.add('hidden');
+      document.getElementById('login-screen')?.classList.remove('hidden');
+    }, 2000);
 
   } catch (err) {
-    console.error('Erreur :', err);
-    showMessage(elements.registerMessage, `❌ Erreur : ${err.message}`, 'error');
+    console.error('❌ Erreur inscription:', err);
+    showMessage(document.getElementById('register-message'), `❌ Erreur : ${err.message}`, 'error');
   }
 }
+
 /**
- * Connexion d'un utilisateur
+ * Connecte un utilisateur
  */
 async function loginUser() {
-  const email = elements.loginEmail.value.trim();
-  const password = elements.loginPassword.value.trim();
-
-  if (!email || !password) {
-    showMessage(
-      elements.loginMessage,
-      '❌ Email et mot de passe obligatoires',
-      'error'
-    );
-    return;
-  }
-
   try {
-    // Connexion Supabase
-    const { data: authData, error: authError } =
-      await supabaseClient.auth.signInWithPassword({
-        email,
-        password
-      });
+    const email = document.getElementById('login-email')?.value.trim();
+    const password = document.getElementById('login-password')?.value;
 
-    if (authError) {
-      showMessage(
-        elements.loginMessage,
-        `❌ Erreur : ${authError.message}`,
-        'error'
-      );
+    if (!email || !password) {
+      showMessage(document.getElementById('login-message'), '❌ Email et mot de passe requis', 'error');
       return;
     }
 
-    const user = authData?.user;
+    const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
+      email,
+      password
+    });
 
-    if (!user) {
-      showMessage(
-        elements.loginMessage,
-        '❌ Erreur d’authentification',
-        'error'
-      );
-      return;
-    }
+    if (authError) throw authError;
 
-    // Chargement du profil
-    const {
-      data: profiles,
-      error: profileError
-    } = await supabaseClient
+    // Vérifier le statut du profil
+    const { data: profile, error: profileError } = await supabaseClient
       .from('profiles')
       .select('*')
-      .eq('id', user.id)
-      .limit(1);
+      .eq('id', authData.user.id)
+      .maybeSingle();
 
-    if (profileError) {
-      console.error('❌ Erreur profil :', profileError);
-
-      showMessage(
-        elements.loginMessage,
-        `❌ Impossible de charger votre profil : ${profileError.message}`,
-        'error'
-      );
-
-      await supabaseClient.auth.signOut();
-      return;
-    }
-
-    const profile = profiles?.[0] || null;
+    if (profileError) throw profileError;
 
     if (!profile) {
-      console.error('❌ Aucun profil trouvé pour :', user.id);
+      throw new Error('Profil non trouvé');
+    }
 
-      showMessage(
-        elements.loginMessage,
-        '❌ Votre profil Chancellerie est introuvable.',
-        'error'
-      );
-
+    if (profile.status !== 'Approuvé') {
       await supabaseClient.auth.signOut();
-      return;
+      throw new Error('Compte en attente d\'approbation');
     }
 
-    // Vérification du statut
-    if (profile.status === 'En attente d’habilitation') {
-      showMessage(
-        elements.loginMessage,
-        '⏳ Votre compte est en attente d’approbation',
-        'error'
-      );
-
-      await supabaseClient.auth.signOut();
-      return;
-    }
-
-    // Chargement du rôle
-    const {
-      data: roles,
-      error: roleError
-    } = await supabaseClient
-      .from('user_roles')
-      .select('role')
-      .eq('email', email)
-      .limit(1);
-
-    if (roleError) {
-      console.warn('⚠️ Rôle introuvable :', roleError.message);
-    }
-
-    const userRole = roles?.[0] || null;
-
-    // Enregistrement de l’utilisateur connecté
-    appState.currentUser = {
-      ...profile,
-      role: userRole?.role || 'user'
-    };
-
+    appState.currentUser = { ...authData.user, ...profile };
     appState.isAuthenticated = true;
 
-    console.log(
-      '✅ Connecté :',
-      appState.currentUser.name,
-      'Rôle :',
-      appState.currentUser.role
-    );
-
-    showMessage(
-      elements.loginMessage,
-      `✅ Bienvenue ${profile.name} !`,
-      'success'
-    );
-
-    elements.loginForm.reset();
-
-    setTimeout(async () => {
-      await loadAppData();
-      showSection('dashboard');
-    }, 500);
+    await loadAppData();
+    showSection('dashboard');
+    console.log('✅ Connexion réussie:', profile.name);
 
   } catch (err) {
-    console.error('❌ Erreur de connexion :', err);
-
-    showMessage(
-      elements.loginMessage,
-      `❌ Erreur : ${err.message}`,
-      'error'
-    );
+    console.error('❌ Erreur connexion:', err);
+    showMessage(document.getElementById('login-message'), `❌ Erreur : ${err.message}`, 'error');
   }
 }
 
 /**
- * Déconnexion
+ * Déconnecte l'utilisateur
  */
 async function logoutUser() {
   try {
     const { error } = await supabaseClient.auth.signOut();
     if (error) throw error;
 
+    // Réinitialiser l'état complet
     appState.isAuthenticated = false;
     appState.currentUser = null;
     appState.profiles = [];
@@ -338,37 +225,182 @@ async function logoutUser() {
     appState.certifications = [];
     appState.receipts = [];
     appState.journal = [];
+    appState.settings = {};
+    appState.counters = { judicial: 0, certification: 0, receipts: 0, journal: 0 };
+    appState.activeSection = 'dashboard';
 
-    showSection('dashboard');
+    // Masquer le contenu principal, afficher login
+    document.querySelectorAll('.content-section').forEach(section => {
+      section.style.display = 'none';
+      section.classList.remove('active');
+    });
+    
+    const loginScreen = document.getElementById('login-screen');
+    if (loginScreen) {
+      loginScreen.style.display = 'block';
+      loginScreen.classList.remove('hidden');
+    }
+    
+    const registerScreen = document.getElementById('register-screen');
+    if (registerScreen) {
+      registerScreen.classList.add('hidden');
+    }
+
     console.log('✅ Déconnexion réussie');
+
   } catch (err) {
-    console.error('Erreur de déconnexion:', err);
+    console.error('❌ Erreur déconnexion:', err);
   }
 }
 
 // ============================================
-// JOURNAL D'AUDIT
+// GESTION DES PROFILS (ADMIN)
 // ============================================
 
-async function logAction(targetType, targetReference, action, description) {
+/**
+ * Approuve un utilisateur en attente
+ */
+async function approveUser(id) {
+  if (!isAdmin()) {
+    console.warn('⛔ Accès refusé');
+    return;
+  }
+
   try {
-    const logEntry = {
-      actor_name: appState.currentUser?.name || 'Système',
-      actor_id: appState.currentUser?.id || null,
-      action,
-      target_type: targetType,
-      target_reference: targetReference,
-      description,
-    };
+    const { error } = await supabaseClient
+      .from('profiles')
+      .update({ status: 'Approuvé', updated_at: new Date().toISOString() })
+      .eq('id', id);
+
+    if (error) throw error;
+
+    await loadAppData();
+    await logAction('Utilisateur', id, 'Approbation', 'Utilisateur approuvé');
+    renderPendingUsersTable();
+    renderApprovedUsersTable();
+    showMessage(elements.settingsMessage, '✅ Utilisateur approuvé', 'success');
+
+  } catch (err) {
+    console.error('❌ Erreur approbation:', err);
+    showMessage(elements.settingsMessage, `❌ Erreur : ${err.message}`, 'error');
+  }
+}
+
+/**
+ * Rejette/supprime un utilisateur en attente
+ */
+async function rejectUser(id) {
+  if (!isAdmin()) {
+    console.warn('⛔ Accès refusé');
+    return;
+  }
+
+  if (!confirm('Êtes-vous sûr de vouloir rejeter cet utilisateur ?')) return;
+
+  try {
+    // Supprimer le profil
+    const { error: profileError } = await supabaseClient
+      .from('profiles')
+      .delete()
+      .eq('id', id);
+
+    if (profileError) throw profileError;
+
+    // Tentative de suppression auth (peut échouer sans droits admin)
+    try {
+      await supabaseClient.auth.admin.deleteUser(id);
+    } catch (adminErr) {
+      console.warn('⚠️ Suppression auth non possible:', adminErr.message);
+    }
+
+    await loadAppData();
+    await logAction('Utilisateur', id, 'Rejet', 'Utilisateur rejeté');
+    renderPendingUsersTable();
+    showMessage(elements.settingsMessage, '✅ Utilisateur rejeté', 'success');
+
+  } catch (err) {
+    console.error('❌ Erreur rejet:', err);
+    showMessage(elements.settingsMessage, `❌ Erreur : ${err.message}`, 'error');
+  }
+}
+
+/**
+ * Rend le tableau des utilisateurs en attente
+ */
+function renderPendingUsersTable() {
+  if (!elements.pendingUsersTableBody) return;
+
+  const pending = appState.profiles.filter(p => p.status === 'En attente');
+
+  elements.pendingUsersTableBody.innerHTML = pending.length === 0 
+    ? '<tr><td colspan="5">Aucun utilisateur en attente</td></tr>'
+    : pending.map(p => `
+      <tr>
+        <td>${formatDate(p.created_at)}</td>
+        <td>${escapeHtml(p.name)}</td>
+        <td>${escapeHtml(p.email)}</td>
+        <td>${escapeHtml(p.role)}</td>
+        <td>
+          <button onclick="approveUser('${p.id}')" class="success-btn">✓ Approuver</button>
+          <button onclick="rejectUser('${p.id}')" class="danger-btn">✗ Rejeter</button>
+        </td>
+      </tr>
+    `).join('');
+}
+
+/**
+ * Rend le tableau des utilisateurs approuvés
+ */
+function renderApprovedUsersTable() {
+  if (!elements.approvedUsersTableBody) return;
+
+  const approved = appState.profiles.filter(p => p.status === 'Approuvé');
+
+  elements.approvedUsersTableBody.innerHTML = approved.length === 0
+    ? '<tr><td colspan="5">Aucun utilisateur approuvé</td></tr>'
+    : approved.map(p => `
+      <tr>
+        <td>${formatDate(p.created_at)}</td>
+        <td>${escapeHtml(p.name)}</td>
+        <td>${escapeHtml(p.email)}</td>
+        <td>${escapeHtml(p.role)}</td>
+        <td>${p.id === appState.currentUser?.id ? 'Vous' : '-'}</td>
+      </tr>
+    `).join('');
+}
+
+// ============================================
+// JOURNAL D'ACTIVITÉ
+// ============================================
+
+/**
+ * Enregistre une action dans le journal
+ */
+async function logAction(entityType, entityId, action, description) {
+  try {
     const { error } = await supabaseClient
       .from('modification_journal')
-      .insert([logEntry]);
-    if (error) throw error;
-    appState.journal.unshift(logEntry);
+      .insert([{
+        actor_id: appState.currentUser?.id,
+        actor_name: appState.currentUser?.name || 'Système',
+        entity_type: entityType,
+        entity_id: String(entityId),
+        action,
+        description,
+        created_at: new Date().toISOString()
+      }]);
+
+    if (error) {
+      console.warn('⚠️ Erreur journal:', error.message);
+    }
   } catch (err) {
-    console.error("Erreur lors de l'enregistrement du journal:", err);
+    console.warn('⚠️ Journal non enregistré:', err.message);
   }
 }
+
+// ============================================
+// PARAMÈTRES DE L'APPLICATION
+// ============================================
 
 /**
  * Sauvegarde les paramètres - ✅ UTILISE 'app_settings'
@@ -392,196 +424,144 @@ async function saveSettingsForm() {
 
     await loadAppData();
     showMessage(elements.settingsMessage, '✅ Paramètres sauvegardés', 'success');
-    await logAction('Paramètres', 'app_settings', 'Modification', 'Paramètres mise à jour');
+    await logAction('Paramètres', 'app_settings', 'Modification', 'Paramètres mis à jour');
   } catch (err) {
-    console.error('Erreur:', err);
+    console.error('❌ Erreur:', err);
     showMessage(elements.settingsMessage, `❌ Erreur : ${err.message}`, 'error');
   }
 }
+
 // ============================================
-// RENDU DES TABLEAUX
+// RENDU DES TABLEAUX - JUDICIAIRE
 // ============================================
 
 /**
- * Rend le tableau des enregistrements judiciaires - ✅ CHAMPS CORRIGÉS
+ * Rend le tableau des enregistrements judiciaires
  */
-function renderJudicialTable(records = appState.judicialRecords) {
+function renderJudicialTable(records) {
   if (!elements.judicialTableBody) return;
 
-  elements.judicialTableBody.innerHTML = records
-    .filter(r => !r.archived)
-    .map(
-      (record) => `
-    <tr>
-      <td>${record.reference || 'N/A'}</td>
-      <td>${record.suspect || 'N/A'}</td>
-      <td>${record.qualification || 'N/A'}</td>
-      <td>${record.sentence || 'N/A'}</td>
-      <td>${record.fine_amount ? formatCurrency(record.fine_amount) : '0 Septims'}</td>
-      <td>${record.fine_status || 'Non réglée'}</td>
-      <td>${formatDate(record.judgment_date)}</td>
-      <td>${record.sentence_status || 'Nouveau'}</td>
-      <td>
-        ${canEdit() ? `
-          <button onclick="editJudicial('${record.id}')" class="action-btn edit-btn">✎</button>
-          <button onclick="archiveJudicial('${record.id}')" class="action-btn archive-btn">📦</button>
-          <button onclick="deleteJudicialConfirm('${record.id}')" class="action-btn delete-btn">🗑</button>
-        ` : ''}
-      </td>
-    </tr>
-  `
-    )
-    .join('');
+  elements.judicialTableBody.innerHTML = records.length === 0
+    ? '<tr><td colspan="10">Aucun enregistrement</td></tr>'
+    : records.map(r => `
+      <tr>
+        <td>${escapeHtml(r.reference)}</td>
+        <td>${escapeHtml(r.suspect)}</td>
+        <td>${escapeHtml(r.magistrate) || 'N/A'}</td>
+        <td>${formatDate(r.judgment_date)}</td>
+        <td><span class="badge badge-${getQualificationClass(r.qualification)}">${escapeHtml(r.qualification)}</span></td>
+        <td>${formatCurrency(r.fine_amount)}</td>
+        <td>${escapeHtml(r.sentence_status)}</td>
+        <td>${escapeHtml(r.fine_status)}</td>
+        <td>${canEdit() ? `
+          <button onclick="editJudicial('${r.id}')" class="edit-btn">✎</button>
+          <button onclick="archiveJudicial('${r.id}')" class="archive-btn">📦</button>
+          <button onclick="deleteJudicialConfirm('${r.id}')" class="delete-btn">🗑</button>
+        ` : '-'}</td>
+      </tr>
+    `).join('');
 }
 
+function getQualificationClass(qualification) {
+  const classes = {
+    'Délit Mineur': 'info',
+    'Délit Majeur': 'warning',
+    'Crime': 'danger',
+    'Infraction Administrative': 'secondary'
+  };
+  return classes[qualification] || 'default';
+}
+
+// ============================================
+// RENDU DES TABLEAUX - CERTIFICATIONS
+// ============================================
+
 /**
- * Rend le tableau des certifications - ✅ CHAMPS CORRIGÉS
+ * Rend le tableau des certifications
  */
-function renderCertificationTable(records = appState.certifications) {
+function renderCertificationTable(certifications) {
   if (!elements.certificationTableBody) return;
 
-  elements.certificationTableBody.innerHTML = records
-    .filter(r => !r.archived)
-    .map(
-      (cert) => `
-    <tr>
-      <td>${cert.reference || 'N/A'}</td>
-      <td>${cert.candidate_name || 'N/A'}</td>
-      <td>${cert.training_type || 'N/A'}</td>
-      <td>${cert.amount ? formatCurrency(cert.amount) : '0 Septims'}</td>
-      <td>${cert.payment_status || 'Non réglée'}</td>
-      <td>${formatDate(cert.training_date)}</td>
-      <td>
-        ${canEdit() ? `
-          <button onclick="editCertification('${cert.id}')" class="action-btn edit-btn">✎</button>
-          <button onclick="archiveCertification('${cert.id}')" class="action-btn archive-btn">📦</button>
-          <button onclick="deleteCertificationConfirm('${cert.id}')" class="action-btn delete-btn">🗑</button>
-        ` : ''}
-      </td>
-    </tr>
-  `
-    )
-    .join('');
+  elements.certificationTableBody.innerHTML = certifications.length === 0
+    ? '<tr><td colspan="8">Aucune certification</td></tr>'
+    : certifications.map(c => `
+      <tr>
+        <td>${escapeHtml(c.reference)}</td>
+        <td>${escapeHtml(c.candidate_name)}</td>
+        <td>${escapeHtml(c.instructor) || 'N/A'}</td>
+        <td>${formatDate(c.training_date)}</td>
+        <td>${escapeHtml(c.training_type)}</td>
+        <td>${formatCurrency(c.amount)}</td>
+        <td><span class="badge badge-${c.payment_status === 'Réglée' ? 'success' : c.payment_status === 'Partiellement réglée' ? 'warning' : 'danger'}">${escapeHtml(c.payment_status)}</span></td>
+        <td>${canEdit() ? `
+          <button onclick="editCertification('${c.id}')" class="edit-btn">✎</button>
+          <button onclick="archiveCertification('${c.id}')" class="archive-btn">📦</button>
+          <button onclick="deleteCertificationConfirm('${c.id}')" class="delete-btn">🗑</button>
+        ` : '-'}</td>
+      </tr>
+    `).join('');
 }
 
+// ============================================
+// RENDU DES TABLEAUX - REÇUS
+// ============================================
+
 /**
- * Rend le tableau des reçus - ✅ CHAMPS CORRIGÉS
+ * Rend le tableau des reçus
  */
-function renderReceiptTable(records = appState.receipts) {
+function renderReceiptTable(receipts) {
   if (!elements.receiptTableBody) return;
 
-  elements.receiptTableBody.innerHTML = records
-    .map(
-      (receipt) => `
-    <tr>
-      <td>${formatDate(receipt.date)}</td>
-      <td>${receipt.reference || 'N/A'}</td>
-      <td>${receipt.dossier_type || 'N/A'}</td>
-      <td>${receipt.collector_name || 'N/A'}</td>
-      <td>${receipt.amount ? formatCurrency(receipt.amount) : '0 Septims'}</td>
-      <td>${receipt.method || 'Espèces'}</td>
-      <td>${receipt.treasury_amount ? formatCurrency(receipt.treasury_amount) : '0 Septims'}</td>
-      <td>${receipt.chancellery_amount ? formatCurrency(receipt.chancellery_amount) : '0 Septims'}</td>
-      <td>
-        ${receipt.treasury_transferred ? '✓' : '✗'}
-      </td>
-      <td>
-        ${receipt.chancellery_transferred ? '✓' : '✗'}
-      </td>
-      <td>
-        ${canEdit() ? `
-          <button onclick="editReceipt('${receipt.id}')" class="action-btn edit-btn">✎</button>
-          <button onclick="deleteReceiptConfirm('${receipt.id}')" class="action-btn delete-btn">🗑</button>
-        ` : ''}
-      </td>
-    </tr>
-  `
-    )
-    .join('');
+  elements.receiptTableBody.innerHTML = receipts.length === 0
+    ? '<tr><td colspan="10">Aucun reçu</td></tr>'
+    : receipts.map(r => `
+      <tr>
+        <td>${formatDate(r.date)}</td>
+        <td>${escapeHtml(r.reference)}</td>
+        <td>${escapeHtml(r.dossier_type)}</td>
+        <td>${escapeHtml(r.dossier_title) || 'N/A'}</td>
+        <td>${escapeHtml(r.collector_name)}</td>
+        <td>${formatCurrency(r.amount)}</td>
+        <td>${escapeHtml(r.method)}</td>
+        <td><span class="badge badge-${r.treasury_transferred ? 'success' : 'warning'}">${r.treasury_transferred ? '✓' : '○'}</span></td>
+        <td><span class="badge badge-${r.chancellery_transferred ? 'success' : 'warning'}">${r.chancellery_transferred ? '✓' : '○'}</span></td>
+        <td>${canEdit() ? `
+          <button onclick="editReceipt('${r.id}')" class="edit-btn">✎</button>
+          <button onclick="deleteReceiptConfirm('${r.id}')" class="delete-btn">🗑</button>
+        ` : '-'}</td>
+      </tr>
+    `).join('');
 }
 
+// ============================================
+// RENDU DES TABLEAUX - JOURNAL
+// ============================================
+
 /**
- * Rend le tableau du journal - ✅ CHAMPS CORRIGÉS
+ * Rend le tableau du journal
  */
-function renderJournalTable(records = appState.journal) {
+function renderJournalTable(entries) {
   if (!elements.journalTableBody) return;
 
-  elements.journalTableBody.innerHTML = records
-    .map(
-      (entry) => `
-    <tr>
-      <td>${formatDate(entry.created_at)}</td>
-      <td>${entry.actor_name || 'Système'}</td>
-      <td>${entry.target_type || 'N/A'}</td>
-      <td>${entry.action || 'N/A'}</td>
-      <td>${entry.target_reference || 'N/A'}</td>
-      <td>${entry.description || 'N/A'}</td>
-    </tr>
-  `
-    )
-    .join('');
-}
-
-/**
- * Rend le tableau des utilisateurs en attente - ✅ UTILISE 'profiles'
- */
-function renderPendingUsersTable() {
-  if (!elements.pendingUsersTableBody) return;
-
-  const pendingUsers = appState.profiles.filter(u => u.status === 'En attente d\'habilitation');
-
-  elements.pendingUsersTableBody.innerHTML = pendingUsers
-    .map(
-      (user) => `
-    <tr>
-      <td>${user.name || 'N/A'}</td>
-      <td>${user.email || 'N/A'}</td>
-      <td>${user.role || 'Scribe'}</td>
-      <td>
-        ${isAdmin() ? `
-          <button onclick="approveUserConfirm('${user.id}')" class="action-btn edit-btn">✓ Approuver</button>
-          <button onclick="deleteUserConfirm('${user.id}')" class="action-btn delete-btn">🗑 Rejeter</button>
-        ` : ''}
-      </td>
-    </tr>
-  `
-    )
-    .join('');
-}
-
-/**
- * Rend le tableau des utilisateurs approuvés - ✅ UTILISE 'profiles'
- */
-function renderApprovedUsersTable() {
-  if (!elements.usersTableBody) return;
-
-  const approvedUsers = appState.profiles.filter(u => u.status === 'Approuvé');
-
-  elements.usersTableBody.innerHTML = approvedUsers
-    .map(
-      (user) => `
-    <tr>
-      <td>${user.name || 'N/A'}</td>
-      <td>${user.email || 'N/A'}</td>
-      <td>${user.role || 'Scribe'}</td>
-      <td>${formatDate(user.last_activity)}</td>
-      <td>
-        ${isAdmin() ? `
-          <button onclick="deleteUserConfirm('${user.id}')" class="action-btn delete-btn">🗑</button>
-        ` : ''}
-      </td>
-    </tr>
-  `
-    )
-    .join('');
+  elements.journalTableBody.innerHTML = entries.length === 0
+    ? '<tr><td colspan="5">Aucune entrée</td></tr>'
+    : entries.map(j => `
+      <tr>
+        <td>${formatDate(j.created_at)}</td>
+        <td>${escapeHtml(j.actor_name)}</td>
+        <td>${escapeHtml(j.entity_type)}</td>
+        <td><span class="badge badge-info">${escapeHtml(j.action)}</span></td>
+        <td>${escapeHtml(j.description)}</td>
+      </tr>
+    `).join('');
 }
 
 // ============================================
-// ÉDITION DES FORMULAIRES
+// FORMULAIRES MODALES - JUDICIAIRE
 // ============================================
 
 /**
- * Édite un enregistrement judiciaire - ✅ CHAMPS CORRIGÉS
+ * Édite un enregistrement judiciaire
  */
 async function editJudicial(id) {
   const record = appState.judicialRecords.find(r => r.id === id);
@@ -593,17 +573,17 @@ async function editJudicial(id) {
 
       <div class="form-group">
         <label>Référence</label>
-        <input type="text" name="reference" value="${record.reference}" required>
+        <input type="text" name="reference" value="${escapeHtml(record.reference)}" required>
       </div>
 
       <div class="form-group">
         <label>Suspect/Accusé</label>
-        <input type="text" name="suspect" value="${record.suspect || ''}" required>
+        <input type="text" name="suspect" value="${escapeHtml(record.suspect)}" required>
       </div>
 
       <div class="form-group">
         <label>Magistrat</label>
-        <input type="text" name="magistrate" value="${record.magistrate || ''}">
+        <input type="text" name="magistrate" value="${escapeHtml(record.magistrate) || ''}">
       </div>
 
       <div class="form-group">
@@ -629,7 +609,7 @@ async function editJudicial(id) {
 
       <div class="form-group">
         <label>Sentence/Peine</label>
-        <textarea name="sentence" required>${record.sentence || ''}</textarea>
+        <textarea name="sentence" required>${escapeHtml(record.sentence)}</textarea>
       </div>
 
       <div class="form-group">
@@ -653,17 +633,17 @@ async function editJudicial(id) {
 
       <div class="form-group">
         <label>Référence du Jugement</label>
-        <input type="text" name="judgment_reference" value="${record.judgment_reference || ''}">
+        <input type="text" name="judgment_reference" value="${escapeHtml(record.judgment_reference) || ''}">
       </div>
 
       <div class="form-group">
         <label>Lien du Jugement</label>
-        <input type="url" name="judgment_link" value="${record.judgment_link || ''}">
+        <input type="url" name="judgment_link" value="${escapeHtml(record.judgment_link) || ''}">
       </div>
 
       <div class="form-group">
         <label>Notes</label>
-        <textarea name="notes">${record.notes || ''}</textarea>
+        <textarea name="notes">${escapeHtml(record.notes) || ''}</textarea>
       </div>
 
       <div class="form-buttons">
@@ -842,7 +822,7 @@ async function archiveJudicial(id) {
     await logAction('Dossier Judiciaire', id, 'Archivage', 'Dossier archivé');
     filterJudicial();
   } catch (err) {
-    console.error('Erreur:', err);
+    console.error('❌ Erreur:', err);
     showMessage(elements.judicialMessage, '❌ Erreur lors de l\'archivage', 'error');
   }
 }
@@ -858,6 +838,10 @@ function deleteJudicialConfirm(id) {
   }
 }
 
+// ============================================
+// FORMULAIRES MODALES - CERTIFICATIONS
+// ============================================
+
 /**
  * Édite une certification - ✅ CHAMPS CORRIGÉS
  */
@@ -871,17 +855,17 @@ async function editCertification(id) {
 
       <div class="form-group">
         <label>Référence</label>
-        <input type="text" name="reference" value="${cert.reference}" required>
+        <input type="text" name="reference" value="${escapeHtml(cert.reference)}" required>
       </div>
 
       <div class="form-group">
         <label>Nom du Candidat</label>
-        <input type="text" name="candidate_name" value="${cert.candidate_name || ''}" required>
+        <input type="text" name="candidate_name" value="${escapeHtml(cert.candidate_name) || ''}" required>
       </div>
 
       <div class="form-group">
         <label>Instructeur</label>
-        <input type="text" name="instructor" value="${cert.instructor || ''}">
+        <input type="text" name="instructor" value="${escapeHtml(cert.instructor) || ''}">
       </div>
 
       <div class="form-group">
@@ -916,7 +900,7 @@ async function editCertification(id) {
 
       <div class="form-group">
         <label>Notes</label>
-        <textarea name="notes">${cert.notes || ''}</textarea>
+        <textarea name="notes">${escapeHtml(cert.notes) || ''}</textarea>
       </div>
 
       <div class="form-buttons">
@@ -1062,7 +1046,7 @@ async function archiveCertification(id) {
     await logAction('Certification', id, 'Archivage', 'Certification archivée');
     filterCertification();
   } catch (err) {
-    console.error('Erreur:', err);
+    console.error('❌ Erreur:', err);
     showMessage(elements.certificationMessage, '❌ Erreur lors de l\'archivage', 'error');
   }
 }
@@ -1077,6 +1061,10 @@ function deleteCertificationConfirm(id) {
     filterCertification();
   }
 }
+
+// ============================================
+// FORMULAIRES MODALES - REÇUS
+// ============================================
 
 /**
  * Édite un reçu - ✅ CHAMPS CORRIGÉS
@@ -1096,22 +1084,22 @@ async function editReceipt(id) {
 
       <div class="form-group">
         <label>Référence</label>
-        <input type="text" name="reference" value="${receipt.reference || ''}" required>
+        <input type="text" name="reference" value="${escapeHtml(receipt.reference) || ''}" required>
       </div>
 
       <div class="form-group">
         <label>Type de Dossier</label>
-        <input type="text" name="dossier_type" value="${receipt.dossier_type || ''}" required>
+        <input type="text" name="dossier_type" value="${escapeHtml(receipt.dossier_type) || ''}" required>
       </div>
 
       <div class="form-group">
         <label>Titre du Dossier</label>
-        <input type="text" name="dossier_title" value="${receipt.dossier_title || ''}">
+        <input type="text" name="dossier_title" value="${escapeHtml(receipt.dossier_title) || ''}">
       </div>
 
       <div class="form-group">
         <label>Collecteur</label>
-        <input type="text" name="collector_name" value="${receipt.collector_name || ''}" required>
+        <input type="text" name="collector_name" value="${escapeHtml(receipt.collector_name) || ''}" required>
       </div>
 
       <div class="form-group">
@@ -1165,7 +1153,7 @@ async function editReceipt(id) {
 
       <div class="form-group">
         <label>Notes</label>
-        <textarea name="notes">${receipt.notes || ''}</textarea>
+        <textarea name="notes">${escapeHtml(receipt.notes) || ''}</textarea>
       </div>
 
       <div class="form-buttons">
@@ -1353,7 +1341,14 @@ function deleteReceiptConfirm(id) {
     filterReceipt();
   }
 }
+
 // ============================================
+// FONCTIONS DE SAUVEGARDE SUPABASE
+// ============================================
+
+/**
+ * Sauvegarde un enregistrement judiciaire
+ */
 async function saveJudicialRecord(record) {
   try {
     if (record.id) {
@@ -1402,7 +1397,7 @@ async function saveJudicialRecord(record) {
     await logAction('Dossier Judiciaire', record.reference, record.id ? 'Modification' : 'Création', `Dossier : ${record.reference}`);
     return true;
   } catch (err) {
-    console.error('Erreur lors de la sauvegarde:', err);
+    console.error('❌ Erreur sauvegarde judiciaire:', err);
     return false;
   }
 }
@@ -1423,7 +1418,7 @@ async function deleteJudicial(id) {
     await logAction('Dossier Judiciaire', id, 'Suppression', 'Dossier supprimé');
     return true;
   } catch (err) {
-    console.error('Erreur lors de la suppression:', err);
+    console.error('❌ Erreur suppression judiciaire:', err);
     return false;
   }
 }
@@ -1471,7 +1466,7 @@ async function saveCertification(cert) {
     await logAction('Certification', cert.reference, cert.id ? 'Modification' : 'Création', `Certification : ${cert.reference}`);
     return true;
   } catch (err) {
-    console.error('Erreur lors de la sauvegarde:', err);
+    console.error('❌ Erreur sauvegarde certification:', err);
     return false;
   }
 }
@@ -1492,7 +1487,7 @@ async function deleteCertification(id) {
     await logAction('Certification', id, 'Suppression', 'Certification supprimée');
     return true;
   } catch (err) {
-    console.error('Erreur lors de la suppression:', err);
+    console.error('❌ Erreur suppression certification:', err);
     return false;
   }
 }
@@ -1520,6 +1515,7 @@ async function saveReceipt(receipt) {
           treasury_transferred: receipt.treasury_transferred,
           chancellery_transferred: receipt.chancellery_transferred,
           notes: receipt.notes,
+          updated_at: new Date().toISOString(),
         })
         .eq('id', receipt.id);
       if (error) throw error;
@@ -1551,7 +1547,7 @@ async function saveReceipt(receipt) {
     await logAction('Reçu', receipt.reference, receipt.id ? 'Modification' : 'Création', `Reçu : ${receipt.reference}`);
     return true;
   } catch (err) {
-    console.error('Erreur lors de la sauvegarde:', err);
+    console.error('❌ Erreur sauvegarde reçu:', err);
     return false;
   }
 }
@@ -1572,7 +1568,7 @@ async function deleteReceipt(id) {
     await logAction('Reçu', id, 'Suppression', 'Reçu supprimé');
     return true;
   } catch (err) {
-    console.error('Erreur lors de la suppression:', err);
+    console.error('❌ Erreur suppression reçu:', err);
     return false;
   }
 }
@@ -1852,6 +1848,30 @@ function formatCurrency(amount) {
   }).format(amount).replace('€', 'Septims');
 }
 
+/**
+ * Échappe les caractères HTML pour éviter XSS
+ */
+function escapeHtml(text) {
+  if (!text) return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+/**
+ * Affiche un message temporaire
+ */
+function showMessage(element, message, type = 'info') {
+  if (!element) return;
+  element.textContent = message;
+  element.className = `message message-${type}`;
+  element.style.display = 'block';
+  
+  setTimeout(() => {
+    element.style.display = 'none';
+  }, 5000);
+}
+
 // ============================================
 // DASHBOARD
 // ============================================
@@ -1870,7 +1890,8 @@ function renderDashboard() {
 
   elements.dashboardContainer.innerHTML = `
     <div class="dashboard-header">
-      <h2>📋 Tableau de Bord</h2>
+      <h2>📋 Tableau de B
+            <h2>📋 Tableau de Bord</h2>
       <p>Bienvenue, ${appState.currentUser?.name || 'Utilisateur'}</p>
     </div>
 
@@ -1925,9 +1946,9 @@ function renderDashboard() {
           ${appState.journal.slice(0, 10).map(entry => `
             <tr>
               <td>${formatDate(entry.created_at)}</td>
-              <td>${entry.actor_name || 'Système'}</td>
-              <td>${entry.action || 'N/A'}</td>
-              <td>${entry.description || 'N/A'}</td>
+              <td>${escapeHtml(entry.actor_name) || 'Système'}</td>
+              <td>${escapeHtml(entry.action) || 'N/A'}</td>
+              <td>${escapeHtml(entry.description) || 'N/A'}</td>
             </tr>
           `).join('')}
         </tbody>
@@ -1946,11 +1967,11 @@ function renderDashboard() {
 }
 
 // ============================================
-// SECTIONS
+// SECTIONS ET NAVIGATION
 // ============================================
 
 /**
- * Affiche une section
+ * Affiche une section et masque les autres
  */
 function showSection(sectionName) {
   appState.activeSection = sectionName;
@@ -1961,14 +1982,13 @@ function showSection(sectionName) {
     section.classList.remove('active');
   });
 
-  // Retirer la classe active des boutons
-  document.querySelectorAll('[data-section]').forEach(btn => {
+  // Retirer la classe active des boutons de nav
+  document.querySelectorAll('.nav-btn, [data-section]').forEach(btn => {
     btn.classList.remove('active');
   });
 
   // Afficher la section sélectionnée
   const activeElement = document.getElementById(sectionName);
-
   if (activeElement) {
     activeElement.style.display = 'block';
     activeElement.classList.add('active');
@@ -1976,30 +1996,43 @@ function showSection(sectionName) {
     console.error(`❌ Section introuvable : ${sectionName}`);
   }
 
-  // Activer le bouton correspondant
-  document
-    .querySelector(`[data-section="${sectionName}"]`)
-    ?.classList.add('active');
+  // Activer le bouton de navigation correspondant
+  const navBtn = document.querySelector(`[data-section="${sectionName}"]`);
+  if (navBtn) navBtn.classList.add('active');
 
-  // Initialiser le contenu
-  if (sectionName === 'judicial') {
-    filterJudicial();
-  } else if (sectionName === 'certification') {
-    filterCertification();
-  } else if (sectionName === 'payments') {
-    filterReceipt();
-  } else if (sectionName === 'journal') {
-    filterJournal();
-  } else if (sectionName === 'users') {
-    renderPendingUsersTable();
-    renderApprovedUsersTable();
-  } else if (sectionName === 'settings') {
-    renderSettings();
+  // Initialiser le contenu spécifique
+  switch (sectionName) {
+    case 'dashboard':
+      renderDashboard();
+      break;
+    case 'judicial':
+      filterJudicial();
+      break;
+    case 'certification':
+      filterCertification();
+      break;
+    case 'payments':
+      filterReceipt();
+      break;
+    case 'journal':
+      filterJournal();
+      break;
+    case 'users':
+      if (isAdmin()) {
+        renderPendingUsersTable();
+        renderApprovedUsersTable();
+      } else {
+        showSection('dashboard');
+      }
+      break;
+    case 'settings':
+      renderSettings();
+      break;
   }
 }
 
 /**
- * Réinitialise les filtres
+ * Réinitialise les filtres d'une section
  */
 function resetFilters(section) {
   if (section.includes('judicial')) {
@@ -2029,7 +2062,7 @@ function resetFilters(section) {
 }
 
 // ============================================
-// SETTINGS
+// PARAMÈTRES
 // ============================================
 
 /**
@@ -2044,7 +2077,7 @@ function renderSettings() {
 
       <div class="form-group">
         <label>Nom de l'Institution</label>
-        <input type="text" id="settings-institution" value="${appState.settings.institution || 'Chancellerie Impériale'}" placeholder="Nom de l'institution">
+        <input type="text" id="settings-institution" value="${escapeHtml(appState.settings.institution) || 'Chancellerie Impériale'}" placeholder="Nom de l'institution">
       </div>
 
       <div class="form-group">
@@ -2064,7 +2097,7 @@ function renderSettings() {
 // ============================================
 
 /**
- * Affiche une modale
+ * Affiche une modale avec le contenu fourni
  */
 function showModal(content) {
   let modal = document.getElementById('global-modal');
@@ -2083,9 +2116,17 @@ function showModal(content) {
   `;
 
   modal.style.display = 'flex';
-  modal.addEventListener('click', (e) => {
+  
+  // Fermer en cliquant sur l'overlay
+  modal.onclick = (e) => {
     if (e.target === modal) closeModal();
-  });
+  };
+
+  // Focus trap pour accessibilité
+  const focusableElements = modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+  if (focusableElements.length > 0) {
+    focusableElements[0].focus();
+  }
 }
 
 /**
@@ -2095,6 +2136,7 @@ function closeModal() {
   const modal = document.getElementById('global-modal');
   if (modal) {
     modal.style.display = 'none';
+    modal.innerHTML = '';
   }
 }
 
@@ -2124,20 +2166,186 @@ function canApprove() {
 }
 
 // ============================================
-// ÉVÉNEMENTS ET INITIALISATIONS
+// FONCTIONS SUPPLÉMENTAIRES DE MANIPULATION
 // ============================================
 
-document.addEventListener('DOMContentLoaded', () => {
+/**
+ * Archive un enregistrement judiciaire (soft delete)
+ */
+async function archiveJudicial(id) {
+  if (!canEdit()) {
+    showMessage(elements.judicialMessage, '⛔ Permission insuffisante', 'error');
+    return;
+  }
+
+  try {
+    const { error } = await supabaseClient
+      .from('judicial_records')
+      .update({ 
+        archived: true, 
+        archived_at: new Date().toISOString(),
+        archived_by: appState.currentUser.id 
+      })
+      .eq('id', id);
+
+    if (error) throw error;
+
+    await loadAppData();
+    await logAction('Dossier Judiciaire', id, 'Archivage', 'Dossier archivé');
+    showMessage(elements.judicialMessage, '✅ Dossier archivé', 'success');
+    filterJudicial();
+
+  } catch (err) {
+    console.error('❌ Erreur archivage:', err);
+    showMessage(elements.judicialMessage, `❌ Erreur : ${err.message}`, 'error');
+  }
+}
+
+/**
+ * Archive une certification (soft delete)
+ */
+async function archiveCertification(id) {
+  if (!canEdit()) {
+    showMessage(elements.certificationMessage, '⛔ Permission insuffisante', 'error');
+    return;
+  }
+
+  try {
+    const { error } = await supabaseClient
+      .from('certifications')
+      .update({ 
+        archived: true, 
+        archived_at: new Date().toISOString(),
+        archived_by: appState.currentUser.id 
+      })
+      .eq('id', id);
+
+    if (error) throw error;
+
+    await loadAppData();
+    await logAction('Certification', id, 'Archivage', 'Certification archivée');
+    showMessage(elements.certificationMessage, '✅ Certification archivée', 'success');
+    filterCertification();
+
+  } catch (err) {
+    console.error('❌ Erreur archivage:', err);
+    showMessage(elements.certificationMessage, `❌ Erreur : ${err.message}`, 'error');
+  }
+}
+
+/**
+ * Confirme la suppression d'un enregistrement judiciaire
+ */
+function deleteJudicialConfirm(id) {
+  if (!confirm('Êtes-vous sûr de vouloir supprimer définitivement ce dossier ? Cette action est irréversible.')) {
+    return;
+  }
+  
+  deleteJudicial(id).then(success => {
+    if (success) {
+      showMessage(elements.judicialMessage, '✅ Dossier supprimé', 'success');
+      filterJudicial();
+    } else {
+      showMessage(elements.judicialMessage, '❌ Erreur lors de la suppression', 'error');
+    }
+  });
+}
+
+/**
+ * Confirme la suppression d'une certification
+ */
+function deleteCertificationConfirm(id) {
+  if (!confirm('Êtes-vous sûr de vouloir supprimer définitivement cette certification ? Cette action est irréversible.')) {
+    return;
+  }
+  
+  deleteCertification(id).then(success => {
+    if (success) {
+      showMessage(elements.certificationMessage, '✅ Certification supprimée', 'success');
+      filterCertification();
+    } else {
+      showMessage(elements.certificationMessage, '❌ Erreur lors de la suppression', 'error');
+    }
+  });
+}
+
+// ============================================
+// INITIALISATION - POINT D'ENTRÉE PRINCIPAL
+// ============================================
+
+let authStateInitialized = false;
+
+document.addEventListener('DOMContentLoaded', async () => {
   console.log('🚀 Application Chancellerie Impériale initialisée');
   
-  // Écouter les changements d'authentification
-  supabaseClient.auth.onAuthStateChange(async (event, session) => {
+  // ========== CORRECTION CRITIQUE : Récupérer la session existante ==========
+  try {
+    const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
+    
+    if (sessionError) {
+      console.error('❌ Erreur récupération session:', sessionError.message);
+    }
+    
     if (session) {
+      console.log('📌 Session existante détectée:', session.user.id);
+      
+      authStateInitialized = true;
       appState.currentUser = session.user;
       appState.isAuthenticated = true;
-      console.log('✅ Utilisateur connecté:', session.user.email);
       
       // Charger le profil complet
+      const { data: profile, error: profileError } = await supabaseClient
+        .from('profiles')
+        .select('*')
+        .eq('id', session.user.id)
+        .maybeSingle();
+      
+      if (profileError) {
+        console.error('❌ Erreur chargement profil:', profileError.message);
+        // Continuer avec les données de base
+      } else if (profile) {
+        appState.currentUser = { ...appState.currentUser, ...profile };
+        console.log('✅ Profil restauré:', profile.name, '- Rôle:', profile.role);
+      }
+      
+      if (appState.currentUser?.status === 'Approuvé') {
+        await loadAppData();
+        showSection('dashboard');
+      } else {
+        console.warn('⛔ Compte non approuvé');
+        await supabaseClient.auth.signOut();
+        appState.isAuthenticated = false;
+        appState.currentUser = null;
+      }
+    } else {
+      console.log('ℹ️ Aucune session existante - affichage écran de connexion');
+    }
+  } catch (initErr) {
+    console.error('❌ Erreur critique initialisation:', initErr);
+  }
+  // ========== FIN CORRECTION CRITIQUE ==========
+
+  // Écouter les changements futurs d'authentification
+  supabaseClient.auth.onAuthStateChange(async (event, session) => {
+    console.log('🔔 Événement auth:', event);
+    
+    // Éviter le double traitement
+    if (event === 'INITIAL_SESSION' && authStateInitialized) {
+      console.log('⏩ Événement INITIAL_SESSION déjà traité, ignoré');
+      return;
+    }
+    
+    if (event === 'INITIAL_SESSION' && session) {
+      authStateInitialized = true;
+      // Déjà géré par getSession() ci-dessus
+      return;
+    }
+
+    if (event === 'SIGNED_IN' && session) {
+      authStateInitialized = true;
+      appState.currentUser = session.user;
+      appState.isAuthenticated = true;
+      
       const { data: profile, error } = await supabaseClient
         .from('profiles')
         .select('*')
@@ -2151,17 +2359,58 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (profile) {
         appState.currentUser = { ...appState.currentUser, ...profile };
-        console.log('✅ Profil chargé:', profile.name);
-        await loadAppData();
-        showSection('dashboard');
+        console.log('✅ Profil chargé après connexion:', profile.name);
+        
+        if (profile.status === 'Approuvé') {
+          await loadAppData();
+          showSection('dashboard');
+        } else {
+          showMessage(document.getElementById('login-message'), '⛔ Compte en attente d\'approbation', 'warning');
+          await supabaseClient.auth.signOut();
+        }
       } else {
         console.warn('⚠️ Profil non trouvé pour cet utilisateur');
         appState.isAuthenticated = false;
+        appState.currentUser = null;
       }
-    } else {
+    } 
+    
+    else if (event === 'SIGNED_OUT') {
+      authStateInitialized = false;
       appState.isAuthenticated = false;
       appState.currentUser = null;
       console.log('❌ Utilisateur déconnecté');
+      
+      // Redirection vers login
+      document.querySelectorAll('.content-section').forEach(s => {
+        s.style.display = 'none';
+        s.classList.remove('active');
+      });
+      
+      const loginScreen = document.getElementById('login-screen');
+      if (loginScreen) {
+        loginScreen.style.display = 'block';
+        loginScreen.classList.remove('hidden');
+      }
+    } 
+    
+    else if (event === 'TOKEN_REFRESHED') {
+      console.log('🔄 Token rafraîchi');
+    } 
+    
+    else if (event === 'USER_UPDATED') {
+      console.log('👤 Utilisateur mis à jour');
+      // Recharger le profil si nécessaire
+      if (session?.user) {
+        const { data: profile } = await supabaseClient
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .maybeSingle();
+        if (profile) {
+          appState.currentUser = { ...appState.currentUser, ...profile };
+        }
+      }
     }
   });
 
@@ -2170,6 +2419,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // ============================================
   if (elements.registerButton) {
     elements.registerButton.addEventListener('click', registerUser);
+  }
+
+  if (elements.logoutButton) {
+    elements.logoutButton.addEventListener('click', logoutUser);
   }
 
   if (elements.judicialForm) {
@@ -2204,16 +2457,16 @@ document.addEventListener('DOMContentLoaded', () => {
   if (showRegisterBtn) {
     showRegisterBtn.addEventListener('click', (e) => {
       e.preventDefault();
-      document.getElementById('login-screen').classList.add('hidden');
-      document.getElementById('register-screen').classList.remove('hidden');
+      document.getElementById('login-screen')?.classList.add('hidden');
+      document.getElementById('register-screen')?.classList.remove('hidden');
     });
   }
 
   if (showLoginBtn) {
     showLoginBtn.addEventListener('click', (e) => {
       e.preventDefault();
-      document.getElementById('register-screen').classList.add('hidden');
-      document.getElementById('login-screen').classList.remove('hidden');
+      document.getElementById('register-screen')?.classList.add('hidden');
+      document.getElementById('login-screen')?.classList.remove('hidden');
     });
   }
 
@@ -2232,30 +2485,116 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ============================================
-  // Écouteurs d'événements - Filtres
+  // Écouteurs d'événements - Filtres judiciaires
   // ============================================
-  if (elements.judicialFilter) elements.judicialFilter.addEventListener('input', filterJudicial);
-  if (elements.judicialStatusFilter) elements.judicialStatusFilter.addEventListener('change', filterJudicial);
-  if (elements.judicialDateFrom) elements.judicialDateFrom.addEventListener('change', filterJudicial);
-  if (elements.judicialDateTo) elements.judicialDateTo.addEventListener('change', filterJudicial);
-  if (elements.resetJudicialFilters) elements.resetJudicialFilters.addEventListener('click', () => resetFilters('judicial'));
+  if (elements.judicialFilter) {
+    elements.judicialFilter.addEventListener('input', debounce(filterJudicial, 300));
+  }
+  if (elements.judicialStatusFilter) {
+    elements.judicialStatusFilter.addEventListener('change', filterJudicial);
+  }
+  if (elements.judicialDateFrom) {
+    elements.judicialDateFrom.addEventListener('change', filterJudicial);
+  }
+  if (elements.judicialDateTo) {
+    elements.judicialDateTo.addEventListener('change', filterJudicial);
+  }
+  if (elements.resetJudicialFilters) {
+    elements.resetJudicialFilters.addEventListener('click', () => resetFilters('judicial'));
+  }
 
-  if (elements.certificationFilter) elements.certificationFilter.addEventListener('input', filterCertification);
-  if (elements.certificationStatusFilter) elements.certificationStatusFilter.addEventListener('change', filterCertification);
-  if (elements.certificationDateFrom) elements.certificationDateFrom.addEventListener('change', filterCertification);
-  if (elements.certificationDateTo) elements.certificationDateTo.addEventListener('change', filterCertification);
-  if (elements.resetCertificationFilters) elements.resetCertificationFilters.addEventListener('click', () => resetFilters('certification'));
+  // ============================================
+  // Écouteurs d'événements - Filtres certifications
+  // ============================================
+  if (elements.certificationFilter) {
+    elements.certificationFilter.addEventListener('input', debounce(filterCertification, 300));
+  }
+  if (elements.certificationStatusFilter) {
+    elements.certificationStatusFilter.addEventListener('change', filterCertification);
+  }
+  if (elements.certificationDateFrom) {
+    elements.certificationDateFrom.addEventListener('change', filterCertification);
+  }
+  if (elements.certificationDateTo) {
+    elements.certificationDateTo.addEventListener('change', filterCertification);
+  }
+  if (elements.resetCertificationFilters) {
+    elements.resetCertificationFilters.addEventListener('click', () => resetFilters('certification'));
+  }
 
-  if (elements.receiptFilter) elements.receiptFilter.addEventListener('input', filterReceipt);
-  if (elements.receiptStatusFilter) elements.receiptStatusFilter.addEventListener('change', filterReceipt);
-  if (elements.receiptDateFrom) elements.receiptDateFrom.addEventListener('change', filterReceipt);
-  if (elements.receiptDateTo) elements.receiptDateTo.addEventListener('change', filterReceipt);
-  if (elements.resetReceiptFilters) elements.resetReceiptFilters.addEventListener('click', () => resetFilters('payments'));
+  // ============================================
+  // Écouteurs d'événements - Filtres reçus
+  // ============================================
+  if (elements.receiptFilter) {
+    elements.receiptFilter.addEventListener('input', debounce(filterReceipt, 300));
+  }
+  if (elements.receiptStatusFilter) {
+    elements.receiptStatusFilter.addEventListener('change', filterReceipt);
+  }
+  if (elements.receiptDateFrom) {
+    elements.receiptDateFrom.addEventListener('change', filterReceipt);
+  }
+  if (elements.receiptDateTo) {
+    elements.receiptDateTo.addEventListener('change', filterReceipt);
+  }
+  if (elements.resetReceiptFilters) {
+    elements.resetReceiptFilters.addEventListener('click', () => resetFilters('payments'));
+  }
 
-  if (elements.journalFilter) elements.journalFilter.addEventListener('input', filterJournal);
-  if (elements.journalDateFrom) elements.journalDateFrom.addEventListener('change', filterJournal);
-  if (elements.journalDateTo) elements.journalDateTo.addEventListener('change', filterJournal);
-  if (elements.resetJournalFilters) elements.resetJournalFilters.addEventListener('click', () => resetFilters('journal'));
+  // ============================================
+  // Écouteurs d'événements - Filtres journal
+  // ============================================
+  if (elements.journalFilter) {
+    elements.journalFilter.addEventListener('input', debounce(filterJournal, 300));
+  }
+  if (elements.journalDateFrom) {
+    elements.journalDateFrom.addEventListener('change', filterJournal);
+  }
+  if (elements.journalDateTo) {
+    elements.journalDateTo.addEventListener('change', filterJournal);
+  }
+  if (elements.resetJournalFilters) {
+    elements.resetJournalFilters.addEventListener('click', () => resetFilters('journal'));
+  }
 
   console.log('✅ Tous les écouteurs d\'événements sont en place');
 });
+
+// ============================================
+// UTILITAIRES GLOBAUX
+// ============================================
+
+/**
+ * Debounce pour limiter les appels fréquents
+ */
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
+/**
+ * Expose les fonctions nécessaires globalement pour les onclick inline
+ */
+window.newJudicial = newJudicial;
+window.newCertification = newCertification;
+window.newReceipt = newReceipt;
+window.editJudicial = editJudicial;
+window.editCertification = editCertification;
+window.editReceipt = editReceipt;
+window.deleteJudicialConfirm = deleteJudicialConfirm;
+window.deleteCertificationConfirm = deleteCertificationConfirm;
+window.deleteReceiptConfirm = deleteReceiptConfirm;
+window.archiveJudicial = archiveJudicial;
+window.archiveCertification = archiveCertification;
+window.approveUser = approveUser;
+window.rejectUser = rejectUser;
+window.saveSettingsForm = saveSettingsForm;
+window.closeModal = closeModal;
+window.resetFilters = resetFilters;
