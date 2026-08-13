@@ -182,99 +182,144 @@ async function loginUser() {
   const password = elements.loginPassword.value.trim();
 
   if (!email || !password) {
-    showMessage(elements.loginMessage, '❌ Email et mot de passe obligatoires', 'error');
+    showMessage(
+      elements.loginMessage,
+      '❌ Email et mot de passe obligatoires',
+      'error'
+    );
     return;
   }
 
   try {
-    const { data, error } = await supabaseClient.auth.signInWithPassword({
-      email,
-      password,
-    });
+    // Connexion Supabase
+    const { data: authData, error: authError } =
+      await supabaseClient.auth.signInWithPassword({
+        email,
+        password
+      });
 
-    if (error) {
-      showMessage(elements.loginMessage, `❌ Erreur : ${error.message}`, 'error');
+    if (authError) {
+      showMessage(
+        elements.loginMessage,
+        `❌ Erreur : ${authError.message}`,
+        'error'
+      );
       return;
     }
 
-    // ✅ VÉRIFICATION: data et data.user existent bien
-    if (!data || !data.user) {
-      showMessage(elements.loginMessage, '❌ Erreur d\'authentification', 'error');
+    const user = authData?.user;
+
+    if (!user) {
+      showMessage(
+        elements.loginMessage,
+        '❌ Erreur d’authentification',
+        'error'
+      );
       return;
     }
 
-    // ✅ Charge le profil depuis 'profiles'
-    const { data: profile, error: profileError } = await supabaseClient
-  .from('profiles')
-  .select('*')
-  .eq('id', data.user.id)
-  .maybeSingle();
+    // Chargement du profil
+    const {
+      data: profiles,
+      error: profileError
+    } = await supabaseClient
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .limit(1);
 
-if (profileError) {
-  console.error('❌ Erreur profil:', profileError);
+    if (profileError) {
+      console.error('❌ Erreur profil :', profileError);
 
-  showMessage(
-    elements.loginMessage,
-    `❌ Impossible de charger votre profil : ${profileError.message}`,
-    'error'
-  );
+      showMessage(
+        elements.loginMessage,
+        `❌ Impossible de charger votre profil : ${profileError.message}`,
+        'error'
+      );
 
-  await supabaseClient.auth.signOut();
-  return;
-}
-
-if (!profile) {
-  console.error('❌ Aucun profil trouvé pour :', data.user.id);
-
-  showMessage(
-    elements.loginMessage,
-    '❌ Votre profil Chancellerie est introuvable.',
-    'error'
-  );
-
-  await supabaseClient.auth.signOut();
-  return;
-}
-
-    // ✅ VÉRIFICATION: profile existe
-    if (!profile) {
-      showMessage(elements.loginMessage, '❌ Profil non trouvé', 'error');
-      return;
-    }
-
-    if (profile.status === 'En attente d\'habilitation') {
-      showMessage(elements.loginMessage, '⏳ Votre compte est en attente d\'approbation', 'error');
       await supabaseClient.auth.signOut();
       return;
     }
 
-    // ✅ NOUVEAU: Charge le rôle de l'utilisateur depuis 'user_roles'
-    const { data: userRole, error: roleError } = await supabaseClient
+    const profile = profiles?.[0] || null;
+
+    if (!profile) {
+      console.error('❌ Aucun profil trouvé pour :', user.id);
+
+      showMessage(
+        elements.loginMessage,
+        '❌ Votre profil Chancellerie est introuvable.',
+        'error'
+      );
+
+      await supabaseClient.auth.signOut();
+      return;
+    }
+
+    // Vérification du statut
+    if (profile.status === 'En attente d’habilitation') {
+      showMessage(
+        elements.loginMessage,
+        '⏳ Votre compte est en attente d’approbation',
+        'error'
+      );
+
+      await supabaseClient.auth.signOut();
+      return;
+    }
+
+    // Chargement du rôle
+    const {
+      data: roles,
+      error: roleError
+    } = await supabaseClient
       .from('user_roles')
       .select('role')
       .eq('email', email)
-      .maybesingle();
+      .limit(1);
 
-    // ✅ VÉRIFICATION: userRole peut être null (pas grave)
+    if (roleError) {
+      console.warn('⚠️ Rôle introuvable :', roleError.message);
+    }
+
+    const userRole = roles?.[0] || null;
+
+    // Enregistrement de l’utilisateur connecté
     appState.currentUser = {
       ...profile,
-      role: userRole?.role || 'user'  // ✅ Ajoute le rôle
+      role: userRole?.role || 'user'
     };
+
     appState.isAuthenticated = true;
 
-    console.log('✅ Connecté:', appState.currentUser.name, 'Rôle:', appState.currentUser.role);
-    showMessage(elements.loginMessage, `✅ Bienvenue ${profile.name}!`, 'success');
+    console.log(
+      '✅ Connecté :',
+      appState.currentUser.name,
+      'Rôle :',
+      appState.currentUser.role
+    );
+
+    showMessage(
+      elements.loginMessage,
+      `✅ Bienvenue ${profile.name} !`,
+      'success'
+    );
+
     elements.loginForm.reset();
-    
-    // Petite pause avant de charger les données
+
     setTimeout(async () => {
       await loadAppData();
       showSection('dashboard');
     }, 500);
 
   } catch (err) {
-    console.error('Erreur de connexion:', err);
-    showMessage(elements.loginMessage, `❌ Erreur : ${err.message}`, 'error');
+    console.error('❌ Erreur de connexion :', err);
+
+    showMessage(
+      elements.loginMessage,
+      `❌ Erreur : ${err.message}`,
+      'error'
+    );
   }
 }
 
