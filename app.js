@@ -2598,3 +2598,302 @@ window.rejectUser = rejectUser;
 window.saveSettingsForm = saveSettingsForm;
 window.closeModal = closeModal;
 window.resetFilters = resetFilters;
+// ============================================
+// FONCTIONS DE GESTION DES UTILISATEURS (suite)
+// ============================================
+
+/**
+ * Affiche les détails d'un utilisateur dans une modale
+ */
+function showUserDetails(userId) {
+  const user = appState.profiles.find(p => p.id === userId);
+  if (!user) {
+    showMessage(document.getElementById('users-message'), '❌ Utilisateur non trouvé', 'error');
+    return;
+  }
+
+  const content = `
+    <div class="user-detail-modal">
+      <h3>📋 Profil de ${escapeHtml(user.name)}</h3>
+      
+      <div class="detail-row">
+        <span class="detail-label">Email :</span>
+        <span class="detail-value">${escapeHtml(user.email)}</span>
+      </div>
+      
+      <div class="detail-row">
+        <span class="detail-label">Rôle :</span>
+        <span class="detail-value">${escapeHtml(user.role) || 'Non assigné'}</span>
+      </div>
+      
+      <div class="detail-row">
+        <span class="detail-label">Statut :</span>
+        <span class="detail-value">${user.status === 'Approuvé' ? '✅ Approuvé' : '⏳ En attente'}</span>
+      </div>
+      
+      <div class="detail-row">
+        <span class="detail-label">Date d'inscription :</span>
+        <span class="detail-value">${formatDate(user.created_at)}</span>
+      </div>
+      
+      ${user.approved_by ? `
+        <div class="detail-row">
+          <span class="detail-label">Approuvé par :</span>
+          <span class="detail-value">${escapeHtml(user.approved_by_name) || 'Inconnu'}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Date d'approbation :</span>
+          <span class="detail-value">${formatDate(user.approved_at)}</span>
+        </div>
+      ` : ''}
+      
+      <div class="form-buttons">
+        <button type="button" class="secondary-btn" onclick="closeModal()">❌ Fermer</button>
+      </div>
+    </div>
+  `;
+  
+  showModal(content);
+}
+
+// ============================================
+// FONCTIONS DE PARAMÈTRES (suite)
+// ============================================
+
+/**
+ * Sauvegarde les paramètres depuis le formulaire
+ */
+async function saveSettingsForm() {
+  if (!isAdmin()) {
+    showMessage(elements.settingsMessage, '⛔ Permission insuffisante', 'error');
+    return;
+  }
+
+  const institution = document.getElementById('settings-institution')?.value.trim();
+  const year = document.getElementById('settings-year')?.value.trim();
+
+  if (!institution) {
+    showMessage(elements.settingsMessage, '⚠️ Le nom de l\'institution est requis', 'error');
+    return;
+  }
+
+  const settings = {
+    institution: institution,
+    year: parseInt(year) || new Date().getFullYear(),
+    updated_at: new Date().toISOString(),
+    updated_by: appState.currentUser.id
+  };
+
+  try {
+    // Vérifier si un enregistrement existe
+    const { data: existing, error: checkError } = await supabaseClient
+      .from('app_settings')
+      .select('id')
+      .eq('id', 1)
+      .maybeSingle();
+
+    if (checkError) throw checkError;
+
+    let result;
+    if (existing) {
+      // Mise à jour
+      result = await supabaseClient
+        .from('app_settings')
+        .update(settings)
+        .eq('id', 1);
+    } else {
+      // Création
+      result = await supabaseClient
+        .from('app_settings')
+        .insert([{ id: 1, ...settings }]);
+    }
+
+    if (result.error) throw result.error;
+
+    appState.settings = { ...appState.settings, ...settings };
+    await logAction('Paramètres', 1, 'Modification', `Institution: ${institution}, Année: ${year}`);
+    showMessage(elements.settingsMessage, '✅ Paramètres enregistrés', 'success');
+
+  } catch (err) {
+    console.error('❌ Erreur sauvegarde paramètres:', err);
+    showMessage(elements.settingsMessage, `❌ Erreur : ${err.message}`, 'error');
+  }
+}
+
+// ============================================
+// FONCTIONS DE RENDU DES TABLEAUX (manquantes)
+// ============================================
+
+/**
+ * Rend le tableau des utilisateurs en attente
+ */
+function renderPendingUsersTable() {
+  if (!elements.pendingUsersTableBody) return;
+
+  const pending = appState.profiles.filter(p => p.status !== 'Approuvé');
+
+  if (pending.length === 0) {
+    elements.pendingUsersTableBody.innerHTML = `
+      <tr><td colspan="5" class="empty-message">Aucun utilisateur en attente d'approbation</td></tr>
+    `;
+    return;
+  }
+
+  elements.pendingUsersTableBody.innerHTML = pending.map(user => `
+    <tr>
+      <td>${formatDate(user.created_at)}</td>
+      <td>${escapeHtml(user.name)}</td>
+      <td>${escapeHtml(user.email)}</td>
+      <td>${escapeHtml(user.role) || 'Non assigné'}</td>
+      <td class="actions">
+        <button class="btn-approve" onclick="approveUser('${user.id}')">✅ Approuver</button>
+        <button class="btn-reject" onclick="rejectUser('${user.id}')">❌ Rejeter</button>
+        <button class="btn-view" onclick="showUserDetails('${user.id}')">👁️ Détails</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+/**
+ * Rend le tableau des utilisateurs approuvés
+ */
+function renderApprovedUsersTable() {
+  if (!elements.approvedUsersTableBody) return;
+
+  const approved = appState.profiles.filter(p => p.status === 'Approuvé');
+
+  if (approved.length === 0) {
+    elements.approvedUsersTableBody.innerHTML = `
+      <tr><td colspan="5" class="empty-message">Aucun utilisateur approuvé</td></tr>
+    `;
+    return;
+  }
+
+  elements.approvedUsersTableBody.innerHTML = approved.map(user => `
+    <tr>
+      <td>${formatDate(user.approved_at || user.created_at)}</td>
+      <td>${escapeHtml(user.name)}</td>
+      <td>${escapeHtml(user.email)}</td>
+      <td>${escapeHtml(user.role) || 'Non assigné'}</td>
+      <td class="actions">
+        <button class="btn-view" onclick="showUserDetails('${user.id}')">👁️ Détails</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+// ============================================
+// FONCTIONS DE STATISTIQUES AVANCÉES
+// ============================================
+
+/**
+ * Calcule les statistiques judiciaires
+ */
+function getJudicialStats() {
+  const records = appState.judicialRecords.filter(r => !r.archived);
+  const now = new Date();
+  const thirtyDaysAgo = new Date(now - 30 * 24 * 60 * 60 * 1000);
+
+  return {
+    total: records.length,
+    pending: records.filter(r => r.sentence_status === 'En attente').length,
+    completed: records.filter(r => r.sentence_status === 'Exécuté').length,
+    recent: records.filter(r => new Date(r.created_at) >= thirtyDaysAgo).length,
+    byStatus: groupBy(records, 'sentence_status')
+  };
+}
+
+/**
+ * Calcule les statistiques de trésorerie
+ */
+function getTreasuryStats() {
+  const receipts = appState.receipts;
+  const thirtyDaysAgo = new Date(new Date() - 30 * 24 * 60 * 60 * 1000);
+
+  return {
+    totalCollected: receipts.reduce((sum, r) => sum + (r.amount || 0), 0),
+    treasuryAmount: receipts.reduce((sum, r) => sum + (r.treasury_amount || 0), 0),
+    chancelleryAmount: receipts.reduce((sum, r) => sum + (r.chancellery_amount || 0), 0),
+    recentReceipts: receipts.filter(r => new Date(r.date) >= thirtyDaysAgo).length
+  };
+}
+
+/**
+ * Groupe un tableau par une propriété
+ */
+function groupBy(array, property) {
+  return array.reduce((groups, item) => {
+    const key = item[property] || 'Non défini';
+    groups[key] = (groups[key] || 0) + 1;
+    return groups;
+  }, {});
+}
+
+// ============================================
+// GESTION DES ERREURS GLOBALE
+// ============================================
+
+window.addEventListener('error', (event) => {
+  console.error('❌ Erreur globale:', event.error);
+  // Éviter les boucles infinies d'erreurs
+  if (event.message?.includes('supabase')) {
+    console.warn('🔄 Tentative de reconnexion Supabase...');
+  }
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+  console.error('❌ Promesse non gérée:', event.reason);
+});
+
+// ============================================
+// MODE DÉVELOPPEMENT - UTILITAIRES
+// ============================================
+
+/**
+ * Debug: Affiche l'état complet de l'application
+ */
+function debugState() {
+  console.log('=== ÉTAT DE L\'APPLICATION ===');
+  console.log('Authentifié:', appState.isAuthenticated);
+  console.log('Utilisateur:', appState.currentUser);
+  console.log('Profils:', appState.profiles.length);
+  console.log('Dossiers judiciaires:', appState.judicialRecords.length);
+  console.log('Certifications:', appState.certifications.length);
+  console.log('Reçus:', appState.receipts.length);
+  console.log('Journal:', appState.journal.length);
+  console.log('Paramètres:', appState.settings);
+  console.log('Section active:', appState.activeSection);
+  console.log('=============================');
+}
+
+// Exposer pour debug console
+window.debugState = debugState;
+
+/**
+ * Vérifie la connexion Supabase
+ */
+async function checkSupabaseConnection() {
+  try {
+    const start = Date.now();
+    const { data, error } = await supabaseClient.from('app_settings').select('id').limit(1);
+    const duration = Date.now() - start;
+    
+    if (error) throw error;
+    
+    console.log(`✅ Connexion Supabase OK (${duration}ms)`);
+    return true;
+  } catch (err) {
+    console.error('❌ Connexion Supabase échouée:', err.message);
+    return false;
+  }
+}
+
+// Exposer pour debug
+window.checkSupabaseConnection = checkSupabaseConnection;
+
+// ============================================
+// FINALISATION
+// ============================================
+
+console.log('📜 Corpus Proceduralis Imperialis — Module Chancellerie chargé');
+console.log('👤 Son Eminence Cassian Varo — Grand Chancelier Impérial de Bordeciel');
